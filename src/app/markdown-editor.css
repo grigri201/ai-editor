@@ -1,7 +1,7 @@
 /* Markdown 编辑器自定义样式 */
 
-/* 单栏编辑器容器样式 */
-.markdown-editor-single-column {
+/* 编辑器包装器 */
+.markdown-editor-wrapper {
   width: 100%;
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
@@ -10,124 +10,94 @@
   position: relative;
 }
 
-.editor-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* 隐藏的输入框 */
-.editor-textarea {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  z-index: 1;
-  resize: none;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  padding: 20px;
-}
-
-/* 预览层 */
-.editor-preview {
-  position: relative;
+/* 可编辑内容区域 */
+.markdown-editor-content {
   width: 100%;
   height: 100%;
   padding: 20px;
   overflow-y: auto;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   color: #1f2937;
+  outline: none;
   cursor: text;
 }
 
-/* 占位符样式 */
-.editor-placeholder {
+/* 空内容时的占位符 */
+.markdown-editor-content:empty::before {
+  content: '请输入 Markdown 内容...';
   color: #9ca3af;
   font-style: italic;
-}
-
-/* 光标样式 */
-.editor-cursor {
-  position: absolute;
-  width: 2px;
-  height: 1.2em;
-  background-color: #3b82f6;
-  animation: blink 1s infinite;
   pointer-events: none;
+  position: absolute;
 }
 
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+/* Markdown 行样式 */
+.markdown-line {
+  min-height: 1.6em;
+  position: relative;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* Markdown 语法高亮样式 */
 .markdown-syntax {
   color: #6b7280;
   opacity: 0.7;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.9em;
 }
 
 /* 标题样式 */
 .markdown-h1 {
   font-size: 2em;
   font-weight: bold;
-  margin: 0.67em 0;
+  color: #111827;
 }
 
 .markdown-h2 {
   font-size: 1.5em;
   font-weight: bold;
-  margin: 0.75em 0;
+  color: #111827;
 }
 
 .markdown-h3 {
-  font-size: 1.17em;
+  font-size: 1.25em;
   font-weight: bold;
-  margin: 0.83em 0;
+  color: #111827;
 }
 
 .markdown-h4 {
-  font-size: 1em;
+  font-size: 1.125em;
   font-weight: bold;
-  margin: 1.12em 0;
+  color: #111827;
 }
 
 .markdown-h5 {
-  font-size: 0.83em;
+  font-size: 1em;
   font-weight: bold;
-  margin: 1.5em 0;
+  color: #111827;
 }
 
 .markdown-h6 {
-  font-size: 0.75em;
+  font-size: 0.875em;
   font-weight: bold;
-  margin: 1.67em 0;
+  color: #111827;
 }
 
-.markdown-heading-text {
-  color: #1f2937;
+/* 强调样式 */
+.markdown-editor-content strong {
   font-weight: bold;
+  color: #111827;
+}
+
+.markdown-editor-content em {
+  font-style: italic;
+  color: #374151;
 }
 
 /* 列表样式 */
-.markdown-list-item {
-  margin: 0.25em 0;
-  padding-left: 1.5em;
-  position: relative;
-}
-
-.markdown-list-item .markdown-syntax {
-  position: absolute;
-  left: 0;
-}
-
 .markdown-list-content {
   color: #374151;
 }
@@ -137,9 +107,9 @@
   background-color: #f3f4f6;
   padding: 0.125em 0.25em;
   border-radius: 0.25em;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9em;
-  color: #e11d48;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.875em;
+  color: #dc2626;
 }
 
 /* 代码块样式 */
@@ -155,7 +125,7 @@
   padding: 0.5em 1em;
   font-size: 0.875em;
   color: #6b7280;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
 .markdown-code-block pre {
@@ -165,17 +135,9 @@
 }
 
 .markdown-code-block code {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
   font-size: 0.875em;
   line-height: 1.5;
-}
-
-.markdown-code-end {
-  background-color: #e5e7eb;
-  padding: 0.5em 1em;
-  font-size: 0.875em;
-  color: #6b7280;
-  font-family: 'Courier New', Courier, monospace;
 }
 
 /* 链接样式 */
@@ -214,29 +176,38 @@
 
 /* 暗色模式支持 */
 @media (prefers-color-scheme: dark) {
-  .markdown-editor-single-column {
+  .markdown-editor-wrapper {
     background-color: #1f2937;
     border-color: #374151;
   }
 
-  .editor-preview {
+  .markdown-editor-content {
     color: #e5e7eb;
   }
 
-  .editor-placeholder {
+  .markdown-editor-content:empty::before {
     color: #6b7280;
-  }
-
-  .editor-cursor {
-    background-color: #60a5fa;
   }
 
   .markdown-syntax {
     color: #9ca3af;
   }
 
-  .markdown-heading-text {
+  .markdown-h1,
+  .markdown-h2,
+  .markdown-h3,
+  .markdown-h4,
+  .markdown-h5,
+  .markdown-h6 {
     color: #f3f4f6;
+  }
+
+  .markdown-editor-content strong {
+    color: #f3f4f6;
+  }
+
+  .markdown-editor-content em {
+    color: #d1d5db;
   }
 
   .markdown-list-content {
@@ -249,12 +220,11 @@
   }
 
   .markdown-code-block {
-    background-color: #1f2937;
+    background-color: #111827;
   }
 
-  .markdown-code-lang,
-  .markdown-code-end {
-    background-color: #111827;
+  .markdown-code-lang {
+    background-color: #030712;
     color: #9ca3af;
   }
 
@@ -276,6 +246,15 @@
   }
 }
 
+/* 移除旧的样式 */
+.markdown-editor-single-column,
+.editor-container,
+.editor-textarea,
+.editor-preview,
+.editor-placeholder,
+.editor-cursor {
+  /* 这些类不再使用 */
+}
 
 /* 保留语法的渲染器样式 */
 .markdown-renderer.preserve-syntax {
