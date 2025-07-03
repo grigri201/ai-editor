@@ -1,0 +1,289 @@
+/* Markdown 编辑器自定义样式 */
+
+/* 单栏编辑器容器样式 */
+.markdown-editor-single-column {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.editor-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 隐藏的输入框 */
+.editor-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 1;
+  resize: none;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+/* 预览层 */
+.editor-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1f2937;
+  cursor: text;
+}
+
+/* 占位符样式 */
+.editor-placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* 光标样式 */
+.editor-cursor {
+  position: absolute;
+  width: 2px;
+  height: 1.2em;
+  background-color: #3b82f6;
+  animation: blink 1s infinite;
+  pointer-events: none;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Markdown 语法高亮样式 */
+.markdown-syntax {
+  color: #6b7280;
+  opacity: 0.7;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* 标题样式 */
+.markdown-h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0.67em 0;
+}
+
+.markdown-h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.75em 0;
+}
+
+.markdown-h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin: 0.83em 0;
+}
+
+.markdown-h4 {
+  font-size: 1em;
+  font-weight: bold;
+  margin: 1.12em 0;
+}
+
+.markdown-h5 {
+  font-size: 0.83em;
+  font-weight: bold;
+  margin: 1.5em 0;
+}
+
+.markdown-h6 {
+  font-size: 0.75em;
+  font-weight: bold;
+  margin: 1.67em 0;
+}
+
+.markdown-heading-text {
+  color: #1f2937;
+  font-weight: bold;
+}
+
+/* 列表样式 */
+.markdown-list-item {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+  position: relative;
+}
+
+.markdown-list-item .markdown-syntax {
+  position: absolute;
+  left: 0;
+}
+
+.markdown-list-content {
+  color: #374151;
+}
+
+/* 行内代码样式 */
+.markdown-inline-code {
+  background-color: #f3f4f6;
+  padding: 0.125em 0.25em;
+  border-radius: 0.25em;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  color: #e11d48;
+}
+
+/* 代码块样式 */
+.markdown-code-block {
+  margin: 1em 0;
+  background-color: #f9fafb;
+  border-radius: 0.375em;
+  overflow: hidden;
+}
+
+.markdown-code-lang {
+  background-color: #e5e7eb;
+  padding: 0.5em 1em;
+  font-size: 0.875em;
+  color: #6b7280;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.markdown-code-block pre {
+  margin: 0;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.markdown-code-block code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875em;
+  line-height: 1.5;
+}
+
+.markdown-code-end {
+  background-color: #e5e7eb;
+  padding: 0.5em 1em;
+  font-size: 0.875em;
+  color: #6b7280;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* 链接样式 */
+.markdown-link {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.markdown-link:hover {
+  color: #2563eb;
+}
+
+/* 引用块样式 */
+.markdown-blockquote {
+  border-left: 4px solid #d1d5db;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #6b7280;
+}
+
+.markdown-quote-content {
+  font-style: italic;
+}
+
+/* 分隔线样式 */
+.markdown-hr {
+  margin: 1.5em 0;
+  position: relative;
+}
+
+.markdown-hr-line {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.5em 0;
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .markdown-editor-single-column {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  .editor-preview {
+    color: #e5e7eb;
+  }
+
+  .editor-placeholder {
+    color: #6b7280;
+  }
+
+  .editor-cursor {
+    background-color: #60a5fa;
+  }
+
+  .markdown-syntax {
+    color: #9ca3af;
+  }
+
+  .markdown-heading-text {
+    color: #f3f4f6;
+  }
+
+  .markdown-list-content {
+    color: #e5e7eb;
+  }
+
+  .markdown-inline-code {
+    background-color: #374151;
+    color: #f87171;
+  }
+
+  .markdown-code-block {
+    background-color: #1f2937;
+  }
+
+  .markdown-code-lang,
+  .markdown-code-end {
+    background-color: #111827;
+    color: #9ca3af;
+  }
+
+  .markdown-link {
+    color: #60a5fa;
+  }
+
+  .markdown-link:hover {
+    color: #93bbfc;
+  }
+
+  .markdown-blockquote {
+    border-left-color: #4b5563;
+    color: #9ca3af;
+  }
+
+  .markdown-hr-line {
+    border-top-color: #374151;
+  }
+}
+
+
+/* 保留语法的渲染器样式 */
+.markdown-renderer.preserve-syntax {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #1f2937;
+}
+
+.markdown-renderer.preserve-syntax .markdown-line {
+  min-height: 1.5em;
+}
