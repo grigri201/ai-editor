@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import MarkdownEditor, { MarkdownEditorRef } from '@/components/MarkdownEditor';
 
 export default function Home() {
@@ -39,6 +39,8 @@ function hello() {
 试试编辑这些内容，体验实时渲染效果！`);
 
   const editorRef = useRef<MarkdownEditorRef>(null);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [isDevelopment] = useState(process.env.NODE_ENV === 'development');
 
   const handleInsertText = () => {
     if (editorRef.current) {
@@ -57,6 +59,34 @@ function hello() {
       editorRef.current.setCursorPosition(0);
     }
   };
+
+  // 监控光标位置（开发模式）
+  useEffect(() => {
+    if (!isDevelopment) return;
+
+    const handleSelectionChange = () => {
+      if (editorRef.current) {
+        const position = editorRef.current.getCursorPosition();
+        setCursorPosition(position);
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    
+    // 添加键盘和鼠标事件监听
+    const handleEvents = () => {
+      setTimeout(handleSelectionChange, 0);
+    };
+    
+    document.addEventListener('keyup', handleEvents);
+    document.addEventListener('mouseup', handleEvents);
+
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener('keyup', handleEvents);
+      document.removeEventListener('mouseup', handleEvents);
+    };
+  }, [isDevelopment]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -98,6 +128,34 @@ function hello() {
         <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
           提示：在列表项中按回车键会自动创建新的列表项
         </div>
+        
+        {isDevelopment && (
+          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              调试信息（仅开发模式）
+            </h3>
+            <div className="text-xs font-mono text-gray-600 dark:text-gray-400">
+              <p>光标位置: {cursorPosition}</p>
+              <p>内容长度: {markdown.length}</p>
+              <p className="mt-2 text-gray-500">
+                在 Console 中执行以下代码监控详细信息：
+              </p>
+              <pre className="mt-1 p-2 bg-gray-200 dark:bg-gray-700 rounded text-xs overflow-x-auto">
+{`document.addEventListener('selectionchange', () => {
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    console.log('Cursor:', {
+      offset: range.startOffset,
+      container: range.startContainer,
+      text: range.startContainer.textContent
+    });
+  }
+});`}
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
