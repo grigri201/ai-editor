@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Markdown editor built with Next.js 15.3.4 and TypeScript. It provides real-time Markdown rendering while preserving syntax visibility in a single-column editor.
+This is an AI-powered Markdown editor built with Next.js 15.3.4 and TypeScript. It provides real-time Markdown rendering while preserving syntax visibility, with integrated AI assistance via OpenAI and DeepSeek APIs.
 
 ## Development Commands
 
@@ -35,28 +35,49 @@ npm run lint
      - Support for Tab/Shift+Tab list indentation
      - Smart Enter key handling for lists
      - Backspace at line start merges lines
+     - Theme-aware styling (light/dark mode)
    - Exposes ref methods: insertText, deleteText, getCursorPosition, setCursorPosition
 
-2. **Markdown Utilities** (`src/utils/`)
-   - `markdown.ts`: Rendering logic with support for GFM syntax
-   - `cursor.ts`: Cursor position management for contentEditable
-   - `keyboard.ts`: Keyboard event handlers for special keys
-   - `common.ts`: Shared utilities like debounce
+2. **AI Integration** (`src/services/llm.ts`)
+   - Unified LLM service supporting OpenAI and DeepSeek
+   - Configuration management via Zustand store
+   - Features:
+     - API key encryption (basic protection)
+     - Provider switching (OpenAI/DeepSeek)
+     - Model selection per provider
+     - Stream and non-stream response support
+     - Error handling and validation
+
+3. **Configuration System** (`src/stores/configStore.ts`)
+   - Zustand store with localStorage persistence
+   - Manages: API keys, LLM provider, model selection, theme
+   - Automatic model switching when changing providers
+
+4. **Page Layout**
+   - Main editor page (`src/app/page.tsx`): Full-width editor with fixed prompt bar
+   - Config page (`src/app/config/page.tsx`): API key and model configuration
+   - ChatGPT-style prompt bar with integrated send button and menu
 
 ### File Structure
 
 ```
 src/
 ├── app/                    # Next.js app directory
-│   ├── page.tsx           # Main page with editor demo
+│   ├── page.tsx           # Main editor page
+│   ├── config/page.tsx    # Configuration page
 │   └── markdown-editor.css # Custom styles
 ├── components/
 │   └── MarkdownEditor.tsx # Main editor component
-├── constants/
-│   └── editor.ts          # Editor constants and regex patterns
+├── services/
+│   └── llm.ts            # LLM integration service
+├── stores/
+│   └── configStore.ts    # Configuration state management
 ├── types/
-│   └── editor.ts          # TypeScript interfaces
-└── utils/                 # Utility functions
+│   ├── editor.ts         # Editor TypeScript interfaces
+│   └── config.ts         # Configuration types
+├── constants/
+│   └── editor.ts         # Editor constants and regex patterns
+└── utils/                # Utility functions
 ```
 
 ### Supported Markdown Syntax
@@ -84,9 +105,20 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
 ### Styling
 
 - Custom styles in `src/app/markdown-editor.css`
-- Supports dark mode
+- Theme system with light/dark mode support
 - Markdown syntax displayed with reduced opacity
 - Uses Tailwind CSS v4
+- Editor has rounded corners (border-radius: 0.75rem)
+- Responsive layout: 90% width, max 1280px
+
+### UI Layout
+
+- **Main Editor**: Full viewport height, no top navbar
+- **Prompt Bar**: Fixed at bottom, ChatGPT-style with:
+  - Auto-resizing textarea (1-4 lines)
+  - Send button (Enter to send, Shift+Enter for new line)
+  - Menu button (...) for accessing configuration
+- **Configuration Page**: Dark theme with API key and model selection
 
 ## Important Notes
 
@@ -95,4 +127,6 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
 - List indentation uses 2 spaces per level
 - All DOM manipulations use modern Selection/Range APIs instead of deprecated execCommand
 - Code blocks require special handling as they span multiple lines
+- AI responses currently log to console (TODO: integrate into editor)
 - Always output in Chinese when interacting with the codebase (per CLAUDE.local.md)
+- Do not start dev server, use browser-mcp to debug directly (per CLAUDE.local.md)

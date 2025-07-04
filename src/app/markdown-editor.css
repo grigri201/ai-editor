@@ -3,9 +3,10 @@
 /* 编辑器包装器 */
 .markdown-editor-wrapper {
   width: 100%;
+  height: 100%;
   background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border: none;
+  border-radius: 0.75rem;
   overflow: hidden;
   position: relative;
 }
@@ -14,12 +15,12 @@
 .markdown-editor-content {
   width: 100%;
   height: 100%;
-  padding: 20px;
-  overflow-y: auto;
+  padding: 20px 40px 40px 40px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: #1f2937;
+  background-color: #ffffff;
   outline: none;
   cursor: text;
 }
@@ -181,81 +182,84 @@
   margin: 0.5em 0;
 }
 
-/* 暗色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .markdown-editor-wrapper {
-    background-color: #1f2937;
-    border-color: #374151;
-  }
+/* 暗色模式支持 - 通过类名控制 */
+.dark .markdown-editor-wrapper {
+  background-color: #1f2937;
+  border-radius: 0.75rem;
+}
 
-  .markdown-editor-content {
-    color: #e5e7eb;
-  }
+.dark .markdown-editor-content {
+  color: #e5e7eb;
+  background-color: #1f2937;
+}
 
-  .markdown-editor-content:empty::before {
-    color: #6b7280;
-  }
+.dark .markdown-editor-content:empty::before {
+  color: #6b7280;
+}
 
-  .markdown-syntax {
-    color: #9ca3af;
-  }
+.dark .markdown-syntax {
+  color: #9ca3af;
+}
 
-  .markdown-h1,
-  .markdown-h2,
-  .markdown-h3,
-  .markdown-h4,
-  .markdown-h5,
-  .markdown-h6 {
-    color: #f3f4f6;
-  }
+.dark .markdown-h1,
+.dark .markdown-h2,
+.dark .markdown-h3,
+.dark .markdown-h4,
+.dark .markdown-h5,
+.dark .markdown-h6 {
+  color: #f3f4f6;
+}
 
-  .markdown-editor-content strong {
-    color: #f3f4f6;
-  }
+.dark .markdown-editor-content strong {
+  color: #f3f4f6;
+}
 
-  .markdown-editor-content em {
-    color: #d1d5db;
-  }
+.dark .markdown-editor-content em {
+  color: #d1d5db;
+}
 
-  .markdown-editor-content del {
-    color: #9ca3af;
-  }
+.dark .markdown-editor-content del {
+  color: #9ca3af;
+}
 
-  .markdown-list-content {
-    color: #e5e7eb;
-  }
+.dark .markdown-list-content {
+  color: #e5e7eb;
+}
 
-  .markdown-inline-code {
-    background-color: #374151;
-    color: #f87171;
-  }
+.dark .markdown-inline-code {
+  background-color: #374151;
+  color: #f87171;
+}
 
-  .markdown-code-block {
-    color: #e5e7eb;
-    background-color: #1f2937;
-  }
+.dark .markdown-code-block {
+  color: #e5e7eb;
+  background-color: #1f2937;
+}
 
-  .markdown-code-lang {
-    background-color: #030712;
-    color: #9ca3af;
-  }
+.dark .markdown-code-lang {
+  background-color: #030712;
+  color: #9ca3af;
+}
 
-  .markdown-link {
-    color: #60a5fa;
-  }
+.dark .markdown-link {
+  color: #60a5fa;
+}
 
-  .markdown-link:hover {
-    color: #93bbfc;
-  }
+.dark .markdown-link:hover {
+  color: #93bbfc;
+}
 
-  .markdown-blockquote {
-    border-left-color: #4b5563;
-    color: #9ca3af;
-  }
+.dark .markdown-blockquote {
+  border-left-color: #4b5563;
+  color: #9ca3af;
+}
 
-  .markdown-hr-line {
-    border-top-color: #374151;
-  }
+.dark .markdown-hr-line {
+  border-top-color: #374151;
+}
+
+.dark .markdown-renderer.preserve-syntax {
+  color: #e5e7eb;
 }
 
 

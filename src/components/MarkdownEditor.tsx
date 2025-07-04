@@ -7,16 +7,18 @@ import { debounce } from '@/utils/common';
 import { renderMarkdownContent, getPlainTextFromEditor } from '@/utils/markdown';
 import { getCursorOffset, setCursorOffset, setCursorInLine } from '@/utils/cursor';
 import { handleTabKey, handleEnterKey, handleBackspaceKey } from '@/utils/keyboard';
+import { useConfigStore } from '@/stores/configStore';
 
 export type { MarkdownEditorRef };
 
 const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
-  ({ value, onChange, height = EDITOR_CONFIG.DEFAULT_HEIGHT }, ref) => {
+  ({ value, onChange }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const [content, setContent] = useState(value);
     const [isComposing, setIsComposing] = useState(false);
     const isRenderingRef = useRef(false);
     const lastCursorPositionRef = useRef(0);
+    const { theme } = useConfigStore();
 
     // 当内容改变时通知父组件
     const notifyChange = useCallback((newContent: string) => {
@@ -42,13 +44,22 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
     // 获取光标位置（相对于纯文本）
     const getCursorOffsetWrapper = useCallback((): number => {
       if (!editorRef.current) return 0;
-      return getCursorOffset(editorRef.current);
+      try {
+        return getCursorOffset(editorRef.current);
+      } catch (error) {
+        console.warn('获取光标位置失败:', error);
+        return 0;
+      }
     }, []);
 
     // 设置光标位置
     const setCursorOffsetWrapper = useCallback((offset: number) => {
       if (!editorRef.current) return;
-      setCursorOffset(editorRef.current, offset);
+      try {
+        setCursorOffset(editorRef.current, offset);
+      } catch (error) {
+        console.warn('设置光标位置失败:', error);
+      }
     }, []);
 
     // 渲染 Markdown 内容，保留语法
@@ -219,7 +230,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
 
 
     return (
-      <div className={CSS_CLASSES.EDITOR_WRAPPER} style={{ height }}>
+      <div className={`${CSS_CLASSES.EDITOR_WRAPPER} ${theme === 'dark' ? 'dark' : ''}`}>
         <div
           ref={editorRef}
           contentEditable

@@ -27,8 +27,7 @@ export const CSS_CLASSES = {
 // 编辑器配置常量
 export const EDITOR_CONFIG = {
   DEBOUNCE_DELAY: 100, // 防抖延迟时间（毫秒）
-  DEFAULT_HEIGHT: 500, // 默认高度
-  LIST_INDENT_SIZE: 2, // 列表缩进空格数
+  LIST_INDENT_SIZE: 4, // 列表缩进空格数
 } as const;
 
 // Markdown 语法正则表达式

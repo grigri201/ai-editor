@@ -6,17 +6,23 @@ export function getCursorOffset(editorElement: HTMLElement): number {
   if (!selection || !selection.rangeCount) return 0;
 
   const range = selection.getRangeAt(0);
+  
+  // 确保光标在编辑器内
+  if (!editorElement || !editorElement.contains(range.startContainer)) {
+    return 0;
+  }
+  
   let offset = 0;
   let node = editorElement.firstChild;
   let foundStart = false;
 
   // 遍历所有行
   while (node && !foundStart) {
-    if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains(CSS_CLASSES.LINE)) {
+    if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList?.contains(CSS_CLASSES.LINE)) {
       const lineElement = node as HTMLElement;
       
       // 检查光标是否在这一行
-      if (lineElement.contains(range.startContainer)) {
+      if (lineElement && lineElement.contains(range.startContainer)) {
         // 计算在这一行内的偏移量
         const lineText = lineElement.textContent || '';
         
