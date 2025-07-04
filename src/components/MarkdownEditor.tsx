@@ -32,10 +32,11 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
     const isRenderingRef = useRef(false);
     const lastCursorPositionRef = useRef(0);
 
-    // 更新内容时同步到父组件
-    useEffect(() => {
-      onChange(content);
-    }, [content, onChange]);
+    // 当内容改变时通知父组件
+    const notifyChange = useCallback((newContent: string) => {
+      setContent(newContent);
+      onChange(newContent);
+    }, [onChange]);
 
     // 初始化时渲染内容
     useEffect(() => {
@@ -48,7 +49,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
     useEffect(() => {
       if (value !== content && editorRef.current) {
         renderContent(value);
-        setContent(value);
+        notifyChange(value);
       }
     }, [value]);
 
@@ -101,12 +102,15 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
       return offset;
     };
 
-    // 设置光标位置 - 简化版本
+    // 设置光标位置
     const setCursorOffset = (offset: number) => {
       if (!editorRef.current) return;
-
-      let currentOffset = 0;
+      
+      // 确保编辑器有焦点
+      editorRef.current.focus();
+      
       const lines = editorRef.current.querySelectorAll('.markdown-line');
+      let currentOffset = 0;
       
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i] as HTMLElement;
@@ -114,57 +118,87 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
         const lineLength = lineText.length;
         const isLastLine = i === lines.length - 1;
         
-        // 计算这一行结束时的偏移量（包括换行符）
-        const lineEndOffset = currentOffset + lineLength + (isLastLine ? 0 : 1);
+        // 这一行的结束位置（包括换行符）
+        const lineEndWithNewline = currentOffset + lineLength + (isLastLine ? 0 : 1);
         
-        if (offset <= lineEndOffset || isLastLine) {
-          // 光标应该在这一行
-          const localOffset = Math.min(offset - currentOffset, lineLength);
-          
-          // 在这一行中找到正确的文本节点
-          const walker = document.createTreeWalker(
-            line,
-            NodeFilter.SHOW_TEXT,
-            null
-          );
-          
-          let node: Node | null;
-          let nodeOffset = 0;
-          
-          while (node = walker.nextNode()) {
-            const nodeLength = node.textContent?.length || 0;
-            if (nodeOffset + nodeLength >= localOffset) {
-              // 在这个文本节点中设置光标
-              const range = document.createRange();
-              const selection = window.getSelection();
-              
-              range.setStart(node, localOffset - nodeOffset);
-              range.collapse(true);
-              
-              selection?.removeAllRanges();
-              selection?.addRange(range);
-              
-              console.log('Set cursor at offset:', offset, 'in line:', i, 'local offset:', localOffset);
-              return;
-            }
-            nodeOffset += nodeLength;
-          }
-          
-          // 如果没找到文本节点，将光标设置在行末
-          const range = document.createRange();
-          const selection = window.getSelection();
-          
-          range.selectNodeContents(line);
-          range.collapse(false);
-          
-          selection?.removeAllRanges();
-          selection?.addRange(range);
+        // 检查光标是否在这一行范围内
+        if (offset >= currentOffset && offset <= currentOffset + lineLength) {
+          // 光标在这一行内
+          const localOffset = offset - currentOffset;
+          setCursorInLine(line, localOffset, i, offset);
           return;
+        } else if (!isLastLine && offset === lineEndWithNewline) {
+          // 光标正好在换行符后（下一行开头）
+          currentOffset = lineEndWithNewline;
+          continue;
         }
         
-        currentOffset = lineEndOffset;
+        currentOffset = lineEndWithNewline;
       }
     };
+    
+    // 辅助函数：在特定行内设置光标
+    const setCursorInLine = useCallback((line: HTMLElement, localOffset: number, lineIndex: number, totalOffset: number) => {
+      const selection = window.getSelection();
+      if (!selection) return;
+      
+      // 清除现有选择
+      selection.removeAllRanges();
+      
+      // 处理空行
+      if (line.innerHTML === '<br>') {
+        const range = document.createRange();
+        const br = line.querySelector('br');
+        if (br) {
+          range.setStartBefore(br);
+          range.collapse(true);
+          selection.addRange(range);
+          console.log('Set cursor at offset:', totalOffset, 'in empty line:', lineIndex);
+        }
+        return;
+      }
+      
+      // 遍历文本节点找到正确位置
+      const walker = document.createTreeWalker(
+        line,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+      
+      let node: Node | null;
+      let nodeOffset = 0;
+      
+      while (node = walker.nextNode()) {
+        const nodeLength = node.textContent?.length || 0;
+        if (nodeOffset + nodeLength >= localOffset) {
+          const range = document.createRange();
+          // 确保偏移量不会为负或超出范围
+          const positionInNode = localOffset - nodeOffset;
+          const safeOffset = Math.max(0, Math.min(positionInNode, nodeLength));
+          
+          try {
+            range.setStart(node, safeOffset);
+            range.collapse(true);
+            selection.addRange(range);
+            console.log('Set cursor at offset:', totalOffset, 'in line:', lineIndex, 'local offset:', localOffset);
+          } catch (e) {
+            console.error('Error setting cursor position:', e);
+            // 如果出错，尝试设置在行末
+            range.selectNodeContents(line);
+            range.collapse(false);
+            selection.addRange(range);
+          }
+          return;
+        }
+        nodeOffset += nodeLength;
+      }
+      
+      // 如果没找到合适的文本节点，设置在行末
+      const range = document.createRange();
+      range.selectNodeContents(line);
+      range.collapse(false);
+      selection.addRange(range);
+    }, []);
 
     // 渲染 Markdown 内容，保留语法
     const renderContent = useCallback((text: string) => {
@@ -230,7 +264,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
           processedLine = `${indent}<span class="markdown-syntax">${number}.</span> <span class="markdown-list-content">${processedContent}</span>`;
         }
         
-        return `<div class="markdown-line" data-line="${lineIndex}">${processedLine || '&nbsp;'}</div>`;
+        return `<div class="markdown-line" data-line="${lineIndex}">${processedLine || '<br>'}</div>`;
       }).join('');
       
       editorRef.current.innerHTML = html;
@@ -240,7 +274,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
         setCursorOffset(cursorOffset);
         isRenderingRef.current = false;
       });
-    }, []);
+    }, [setCursorInLine]);
 
     // 防抖的渲染函数
     const debouncedRender = useCallback(
@@ -256,8 +290,13 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
       const children = element.querySelectorAll('.markdown-line');
       
       children.forEach((child) => {
-        const text = child.textContent || '';
-        lines.push(text === '\u00A0' ? '' : text); // 将 &nbsp; 转换回空字符串
+        // 检查是否只包含 <br> 标签
+        if (child.innerHTML === '<br>') {
+          lines.push('');
+        } else {
+          const text = child.textContent || '';
+          lines.push(text);
+        }
       });
       
       return lines.join('\n');
@@ -268,68 +307,344 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
       if (!editorRef.current || isComposing || isRenderingRef.current) return;
       
       const plainText = getPlainText(editorRef.current);
-      setContent(plainText);
+      notifyChange(plainText);
       
       // 使用防抖渲染
       debouncedRender(plainText);
-    }, [isComposing, debouncedRender]);
+    }, [isComposing, debouncedRender, notifyChange]);
+
+    // 检查光标是否在行首
+    const isCursorAtLineStart = (range: Range, line: Element): boolean => {
+      const lineText = line.textContent || '';
+      if (lineText === '' || lineText === '\u00A0') return true;
+      
+      // 创建一个范围从行开始到光标位置
+      const testRange = document.createRange();
+      testRange.selectNodeContents(line);
+      testRange.setEnd(range.startContainer, range.startOffset);
+      
+      const beforeCursor = testRange.toString();
+      return beforeCursor === '';
+    };
+
+    // 检查光标是否在行尾
+    const isCursorAtLineEnd = (range: Range, line: Element): boolean => {
+      const lineText = line.textContent || '';
+      if (lineText === '' || lineText === '\u00A0') return true;
+      
+      // 创建一个范围从光标位置到行结束
+      const testRange = document.createRange();
+      testRange.setStart(range.endContainer, range.endOffset);
+      testRange.selectNodeContents(line);
+      testRange.setStart(range.endContainer, range.endOffset);
+      
+      const afterCursor = testRange.toString();
+      return afterCursor === '';
+    };
 
     // 处理键盘事件
     const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Enter') {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+      
+      const range = selection.getRangeAt(0);
+      const currentLine = range.startContainer.parentElement?.closest('.markdown-line');
+      if (!currentLine) return;
+      
+      const lineText = currentLine.textContent || '';
+
+      // Tab 键处理
+      if (e.key === 'Tab') {
         e.preventDefault();
         
-        const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return;
+        // 检查是否是列表项
+        const unorderedMatch = lineText.match(/^(\s*)([-*+])\s(.*)$/);
+        const orderedMatch = lineText.match(/^(\s*)(\d+)\.\s(.*)$/);
         
-        const range = selection.getRangeAt(0);
-        const currentLine = range.startContainer.parentElement?.closest('.markdown-line');
-        if (!currentLine) return;
+        if (unorderedMatch || orderedMatch) {
+          // 在列表中，处理缩进
+          const [fullMatch, currentIndent, marker, content] = unorderedMatch || orderedMatch || [];
+          const isOrdered = !!orderedMatch;
+          
+          if (e.shiftKey) {
+            // Shift+Tab: 减少缩进
+            if (currentIndent.length >= 2) {
+              // 计算光标在当前行内的相对位置
+              const cursorOffset = getCursorOffset();
+              const lines = getPlainText(editorRef.current!).split('\n');
+              const lineIndex = Array.from(editorRef.current!.querySelectorAll('.markdown-line')).indexOf(currentLine);
+              
+              // 计算光标在行内的位置
+              let lineStartOffset = 0;
+              for (let i = 0; i < lineIndex; i++) {
+                lineStartOffset += lines[i].length + 1;
+              }
+              const positionInLine = cursorOffset - lineStartOffset;
+              
+              const newIndent = currentIndent.substring(2);
+              let newLine;
+              
+              if (isOrdered) {
+                // 对于有序列表，需要根据上下文调整序号
+                if (newIndent.length === 0) {
+                  // 返回到顶层，需要找到合适的序号
+                  let newNumber = 1;
+                  // 向上查找同级别的最后一个有序列表项
+                  for (let i = lineIndex - 1; i >= 0; i--) {
+                    const prevLine = lines[i];
+                    const prevMatch = prevLine.match(/^(\d+)\.\s/);
+                    if (prevMatch) {
+                      newNumber = parseInt(prevMatch[1]) + 1;
+                      break;
+                    }
+                    // 如果遇到非列表项，停止查找
+                    if (!prevLine.match(/^\s*[-*+\d]+[\.\s]/)) {
+                      break;
+                    }
+                  }
+                  newLine = `${newNumber}. ${content}`;
+                } else {
+                  // 仍然是子列表，保持原序号
+                  newLine = `${newIndent}${marker}. ${content}`;
+                }
+              } else {
+                // 无序列表，保持原样
+                newLine = `${newIndent}${marker} ${content}`;
+              }
+              
+              // 更新整行内容
+              lines[lineIndex] = newLine;
+              
+              const newContent = lines.join('\n');
+              notifyChange(newContent);
+              renderContent(newContent);
+              
+              // 调整光标位置，保持在行内的相对位置
+              // 如果光标在缩进部分，则移到新缩进的末尾
+              // 否则保持相对位置，但要减去移除的2个空格
+              setTimeout(() => {
+                let newPosition;
+                if (positionInLine <= currentIndent.length) {
+                  // 光标在缩进部分，移到新缩进末尾
+                  newPosition = lineStartOffset + newIndent.length;
+                } else {
+                  // 光标在内容部分，保持相对位置
+                  newPosition = lineStartOffset + positionInLine - 2;
+                }
+                setCursorOffset(Math.max(lineStartOffset, newPosition));
+              }, 0);
+            }
+          } else {
+            // Tab: 增加缩进
+            const newIndent = currentIndent + '  ';
+            let newLine;
+            
+            if (isOrdered) {
+              // 对于有序列表，子列表从 1 开始
+              const lines = getPlainText(editorRef.current!).split('\n');
+              const lineIndex = Array.from(editorRef.current!.querySelectorAll('.markdown-line')).indexOf(currentLine);
+              
+              // 检查是否是第一个进入这个缩进级别的项
+              let isFirstAtThisLevel = true;
+              let newNumber = 1;
+              
+              // 向上查找相同缩进级别的最后一个有序列表项
+              for (let i = lineIndex - 1; i >= 0; i--) {
+                const prevLine = lines[i];
+                const prevMatch = prevLine.match(/^(\s*)(\d+)\.\s/);
+                if (prevMatch && prevMatch[1].length === newIndent.length) {
+                  // 找到同级别的有序列表项
+                  newNumber = parseInt(prevMatch[2]) + 1;
+                  isFirstAtThisLevel = false;
+                  break;
+                } else if (prevMatch && prevMatch[1].length < newIndent.length) {
+                  // 遇到上一级列表，说明这是新的子列表级别
+                  break;
+                }
+              }
+              
+              newLine = `${newIndent}${newNumber}. ${content}`;
+            } else {
+              // 无序列表，保持原标记
+              newLine = `${newIndent}${marker} ${content}`;
+            }
+            
+            // 更新整行内容
+            const lines = getPlainText(editorRef.current!).split('\n');
+            const lineIndex = Array.from(editorRef.current!.querySelectorAll('.markdown-line')).indexOf(currentLine);
+            lines[lineIndex] = newLine;
+            
+            const cursorOffset = getCursorOffset();
+            const newContent = lines.join('\n');
+            notifyChange(newContent);
+            renderContent(newContent);
+            
+            // 调整光标位置（增加2个字符）
+            setTimeout(() => {
+              setCursorOffset(cursorOffset + 2);
+            }, 0);
+          }
+        } else {
+          // 不在列表中，插入制表符
+          const textNode = document.createTextNode('\t');
+          range.deleteContents();
+          range.insertNode(textNode);
+          range.setStartAfter(textNode);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          handleInput();
+        }
+      }
+      
+      // Enter 键处理
+      else if (e.key === 'Enter') {
+        e.preventDefault();
         
-        const lineText = currentLine.textContent || '';
+        // 获取当前光标位置
+        const currentOffset = getCursorOffset();
+        
+        // 检查光标是否在行尾
+        const isAtEnd = isCursorAtLineEnd(range, currentLine);
         
         // 检查是否是列表项
         const unorderedMatch = lineText.match(/^(\s*)([-*+])\s/);
         const orderedMatch = lineText.match(/^(\s*)(\d+)\.\s/);
         
         let newLineContent = '\n';
+        let cursorOffsetAdjustment = 1; // 默认光标移动到下一行开头
         
         if (unorderedMatch) {
           const [, indent, marker] = unorderedMatch;
           const restOfLine = lineText.substring(unorderedMatch[0].length);
           
           if (restOfLine.trim() === '') {
-            // 空列表项，移除列表标记
-            newLineContent = '\n';
-          } else {
-            // 创建新列表项
+            // 空列表项，移除当前行的列表标记
+            lines[lineIndex] = '';
+            lines.splice(lineIndex + 1, 0, '');
+            const newContent = lines.join('\n');
+            notifyChange(newContent);
+            renderContent(newContent);
+            
+            // 光标移到新的空行
+            setTimeout(() => {
+              setCursorOffset(lineStartOffset);
+            }, 0);
+            return;
+          } else if (isAtEnd) {
+            // 在行尾，创建新列表项
             newLineContent = `\n${indent}${marker} `;
+            cursorOffsetAdjustment = newLineContent.length;
+          } else {
+            // 在行中间，只换行
+            newLineContent = '\n';
           }
         } else if (orderedMatch) {
           const [, indent, number] = orderedMatch;
           const restOfLine = lineText.substring(orderedMatch[0].length);
           
           if (restOfLine.trim() === '') {
-            // 空列表项，移除列表标记
-            newLineContent = '\n';
-          } else {
-            // 创建新列表项，数字递增
+            // 空列表项，移除当前行的列表标记
+            lines[lineIndex] = '';
+            lines.splice(lineIndex + 1, 0, '');
+            const newContent = lines.join('\n');
+            notifyChange(newContent);
+            renderContent(newContent);
+            
+            // 光标移到新的空行
+            setTimeout(() => {
+              setCursorOffset(lineStartOffset);
+            }, 0);
+            return;
+          } else if (isAtEnd) {
+            // 在行尾，创建新列表项，数字递增
             const nextNumber = parseInt(number) + 1;
             newLineContent = `\n${indent}${nextNumber}. `;
+            cursorOffsetAdjustment = newLineContent.length;
+          } else {
+            // 在行中间，只换行
+            newLineContent = '\n';
           }
         }
         
-        // 使用现代 API 插入文本
-        const textNode = document.createTextNode(newLineContent);
-        range.deleteContents();
-        range.insertNode(textNode);
-        range.setStartAfter(textNode);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        // 获取当前行在整个文本中的位置
+        const lines = getPlainText(editorRef.current!).split('\n');
+        const lineIndex = Array.from(editorRef.current!.querySelectorAll('.markdown-line')).indexOf(currentLine);
         
-        // 触发输入事件更新内容
-        handleInput();
+        // 计算在当前行内的位置
+        let lineStartOffset = 0;
+        for (let i = 0; i < lineIndex; i++) {
+          lineStartOffset += lines[i].length + 1;
+        }
+        const positionInLine = currentOffset - lineStartOffset;
+        
+        // 插入新行内容
+        const beforeCursor = lineText.substring(0, positionInLine);
+        const afterCursor = lineText.substring(positionInLine);
+        
+        lines[lineIndex] = beforeCursor;
+        lines.splice(lineIndex + 1, 0, afterCursor);
+        
+        // 如果需要添加列表前缀，将它添加到新行
+        if (newLineContent.length > 1) {
+          lines[lineIndex + 1] = newLineContent.substring(1) + lines[lineIndex + 1];
+        }
+        
+        const newContent = lines.join('\n');
+        notifyChange(newContent);
+        renderContent(newContent);
+        
+        // 计算新的光标位置
+        // 对于普通换行（没有列表前缀），光标应该在新行开头
+        // 对于列表换行，光标应该在列表前缀之后
+        const newCursorPosition = lineStartOffset + beforeCursor.length + 1 + (newLineContent.length > 1 ? newLineContent.length - 1 : 0);
+        
+        // 设置光标位置
+        setTimeout(() => {
+          setCursorOffset(newCursorPosition);
+        }, 0);
+      }
+      
+      // Backspace 键处理
+      else if (e.key === 'Backspace') {
+        // 检查光标是否在行首
+        if (isCursorAtLineStart(range, currentLine)) {
+          e.preventDefault();
+          
+          // 获取所有行
+          const lines = editorRef.current!.querySelectorAll('.markdown-line');
+          const lineIndex = Array.from(lines).indexOf(currentLine);
+          
+          if (lineIndex > 0) {
+            // 有上一行，合并到上一行
+            const prevLine = lines[lineIndex - 1];
+            const prevLineLength = (prevLine.textContent || '').length;
+            
+            // 获取纯文本内容
+            const textLines = getPlainText(editorRef.current!).split('\n');
+            
+            // 合并行
+            textLines[lineIndex - 1] += textLines[lineIndex];
+            textLines.splice(lineIndex, 1);
+            
+            const newContent = textLines.join('\n');
+            notifyChange(newContent);
+            renderContent(newContent);
+            
+            // 设置光标到上一行末尾
+            setTimeout(() => {
+              // 计算上一行末尾的偏移量
+              let offset = 0;
+              for (let i = 0; i < lineIndex - 1; i++) {
+                offset += textLines[i].length + 1;
+              }
+              // 加上上一行原本的长度（合并前）
+              offset += prevLineLength;
+              setCursorOffset(offset);
+            }, 0);
+          }
+        }
       }
     }, [handleInput]);
 
