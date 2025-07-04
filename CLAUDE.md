@@ -18,9 +18,11 @@ npm run build
 # Start production server
 npm run start
 
-# Run linting
+# Run linting (ESLint with Next.js Core Web Vitals)
 npm run lint
 ```
+
+No test commands are currently configured in this project.
 
 ## Architecture
 
@@ -107,7 +109,7 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
 - Custom styles in `src/app/markdown-editor.css`
 - Theme system with light/dark mode support
 - Markdown syntax displayed with reduced opacity
-- Uses Tailwind CSS v4
+- Uses Tailwind CSS v4 with PostCSS plugin configuration
 - Editor has rounded corners (border-radius: 0.75rem)
 - Responsive layout: 90% width, max 1280px
 
@@ -120,8 +122,23 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
   - Menu button (...) for accessing configuration
 - **Configuration Page**: Dark theme with API key and model selection
 
-## Important Notes
+## Technical Details
 
+### TypeScript Configuration
+- Target: ES2017
+- Strict mode enabled
+- Module resolution: bundler
+- Path alias: `@/*` → `./src/*`
+
+### Dependencies
+- Next.js 15.3.4 (with App Router)
+- React 19.0.0
+- TypeScript 5.x
+- Tailwind CSS v4 (latest PostCSS plugin system)
+- Zustand 5.0.6 (state management)
+- OpenAI SDK 5.8.2
+
+### Implementation Notes
 - The editor re-renders content on every input with debouncing
 - Cursor position must be saved before render and restored after
 - List indentation uses 2 spaces per level
