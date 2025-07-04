@@ -246,15 +246,6 @@
   }
 }
 
-/* 移除旧的样式 */
-.markdown-editor-single-column,
-.editor-container,
-.editor-textarea,
-.editor-preview,
-.editor-placeholder,
-.editor-cursor {
-  /* 这些类不再使用 */
-}
 
 /* 保留语法的渲染器样式 */
 .markdown-renderer.preserve-syntax {
