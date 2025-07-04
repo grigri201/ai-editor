@@ -97,6 +97,11 @@
   color: #374151;
 }
 
+.markdown-editor-content del {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
 /* 列表样式 */
 .markdown-list-content {
   color: #374151;
@@ -114,10 +119,11 @@
 
 /* 代码块样式 */
 .markdown-code-block {
-  margin: 1em 0;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.875em;
+  color: #374151;
   background-color: #f9fafb;
-  border-radius: 0.375em;
-  overflow: hidden;
+  padding: 0 0.5em;
 }
 
 .markdown-code-lang {
@@ -154,8 +160,9 @@
 .markdown-blockquote {
   border-left: 4px solid #d1d5db;
   padding-left: 1em;
-  margin: 1em 0;
-  color: #6b7280;
+  margin-left: 0;
+  display: inline-block;
+  width: 100%;
 }
 
 .markdown-quote-content {
@@ -210,6 +217,10 @@
     color: #d1d5db;
   }
 
+  .markdown-editor-content del {
+    color: #9ca3af;
+  }
+
   .markdown-list-content {
     color: #e5e7eb;
   }
@@ -220,7 +231,8 @@
   }
 
   .markdown-code-block {
-    background-color: #111827;
+    color: #e5e7eb;
+    background-color: #1f2937;
   }
 
   .markdown-code-lang {

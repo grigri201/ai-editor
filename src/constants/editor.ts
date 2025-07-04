@@ -51,8 +51,13 @@ export const MARKDOWN_PATTERNS = {
   INLINE_CODE: /`([^`]+)`/g,
   // 链接
   LINK: /\[([^\]]+)\]\(([^)]+)\)/g,
+  // 删除线
+  STRIKETHROUGH: /~~([^~]+)~~/g,
+  // 任务列表
+  TASK_LIST_UNCHECKED: /^(\s*)([-*+])\s+\[ \]\s+(.*)$/,
+  TASK_LIST_CHECKED: /^(\s*)([-*+])\s+\[x\]\s+(.*)$/,
   // 引用块
-  BLOCKQUOTE: /^>\s+(.*)$/,
+  BLOCKQUOTE: /^(>+)\s*(.*)$/,
   // 分隔线
   HORIZONTAL_RULE: /^(---|\*\*\*|___)$/,
   // 代码块

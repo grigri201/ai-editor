@@ -4,39 +4,71 @@ import { useState, useRef, useEffect } from 'react';
 import MarkdownEditor, { MarkdownEditorRef } from '@/components/MarkdownEditor';
 
 export default function Home() {
-  const [markdown, setMarkdown] = useState(`# 欢迎使用 Markdown 编辑器
+  const [markdown, setMarkdown] = useState(`# Markdown 编辑器示例
 
-这是一个功能强大的 **Markdown 编辑器**，支持实时预览和语法高亮。
+## 标题
+# H1 一级标题
+## H2 二级标题  
+### H3 三级标题
+#### H4 四级标题
+##### H5 五级标题
+###### H6 六级标题
 
-## 功能特性
+## 文本样式
+**粗体** __粗体__ *斜体* _斜体_  
+**_粗斜体_** __*粗斜体*__ ~~删除线~~
 
-- **实时预览**：在编辑的同时查看渲染效果
-- **语法保留**：在渲染的文本中保留 Markdown 语法
-- **光标控制**：通过代码控制光标位置
-- **文本操作**：在光标位置插入或删除文本
-- **列表自动补全**：在列表中按回车自动添加列表项
+## 列表
+- 无序列表
+  - 嵌套项目
+    - 深层嵌套
+* 使用星号
++ 使用加号
 
-### 列表示例
+1. 有序列表
+2. 第二项
+   1. 子项目
 
-1. 有序列表项 1
-2. 有序列表项 2
-3. 有序列表项 3
+- [x] 已完成任务
+- [ ] 未完成任务
+  - [x] 嵌套任务
 
-- 无序列表项 1
-- 无序列表项 2
-- 无序列表项 3
-
-### 代码示例
+## 链接和代码
+[链接文本](https://github.com "标题")  
+行内代码 \`code\`
 
 \`\`\`javascript
-function hello() {
-  console.log("Hello, Markdown!");
-}
+// 代码块
+const greeting = "Hello";
+console.log(greeting);
 \`\`\`
 
-> 这是一个引用块示例
+\`\`\`python
+# Python 示例
+print("Hello")
+\`\`\`
 
-试试编辑这些内容，体验实时渲染效果！`);
+\`\`\`
+无语言标识代码块
+\`\`\`
+
+## 引用
+> 单行引用
+
+> 多行引用
+> 继续引用
+
+> 一级引用
+>> 二级嵌套
+>>> 三级嵌套
+
+> 引用中的 **粗体** 和 \`代码\`
+> - 引用中的列表
+
+## 分隔线
+---
+
+**提示**：编辑器支持完整的 GFM 语法！`);
 
   const editorRef = useRef<MarkdownEditorRef>(null);
   const [cursorPosition, setCursorPosition] = useState(0);
