@@ -42,20 +42,26 @@ No test commands are currently configured in this project.
 
 2. **AI Integration** (`src/services/llm.ts`)
    - Unified LLM service supporting OpenAI and DeepSeek
-   - Configuration management via Zustand store
+   - Template-based prompt system with placeholders
    - Features:
      - API key encryption (basic protection)
      - Provider switching (OpenAI/DeepSeek)
      - Model selection per provider
      - Stream and non-stream response support
+     - Template support with `{content}`, `{instruction}`, `{language}` placeholders
      - Error handling and validation
 
-3. **Configuration System** (`src/stores/configStore.ts`)
+3. **Prompt Templates** (`src/prompts/`)
+   - `system.ts`: System prompt template for ArticleGen agent (DIFF format)
+   - `base.ts`: User prompt template with content/instruction placeholders
+   - Templates are TypeScript modules exporting constants
+
+4. **Configuration System** (`src/stores/configStore.ts`)
    - Zustand store with localStorage persistence
    - Manages: API keys, LLM provider, model selection, theme
    - Automatic model switching when changing providers
 
-4. **Page Layout**
+5. **Page Layout**
    - Main editor page (`src/app/page.tsx`): Full-width editor with fixed prompt bar
    - Config page (`src/app/config/page.tsx`): API key and model configuration
    - ChatGPT-style prompt bar with integrated send button and menu
@@ -74,6 +80,9 @@ src/
 │   └── llm.ts            # LLM integration service
 ├── stores/
 │   └── configStore.ts    # Configuration state management
+├── prompts/              # AI prompt templates
+│   ├── system.ts         # System prompt (ArticleGen DIFF format)
+│   └── base.ts           # User prompt template
 ├── types/
 │   ├── editor.ts         # Editor TypeScript interfaces
 │   └── config.ts         # Configuration types
@@ -94,6 +103,14 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
 - Links
 - Blockquotes with nesting
 - Horizontal rules
+
+### AI Prompt System
+
+The LLM service uses a DIFF-based format for article editing:
+- System prompt defines ArticleGen agent with DIFF format output
+- User prompt template accepts `{content}`, `{instruction}`, `{language}` variables
+- DIFF format uses `@` for context, `-` for deletions, `+` for additions
+- All responses end with `[EOF]` marker
 
 ### Key Implementation Details
 

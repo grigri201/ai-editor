@@ -1,12 +1,23 @@
 import OpenAI from 'openai';
 import { LLMProvider } from '@/types/config';
 import { getDecryptedApiKey, useConfigStore } from '@/stores/configStore';
+import { SYSTEM_TEMPLATE } from '@/prompts/system';
+import { USER_TEMPLATE } from '@/prompts/base';
 
 // API 端点配置
 const API_ENDPOINTS = {
   openai: 'https://api.openai.com/v1',
   deepseek: 'https://api.deepseek.com/v1'
 } as const;
+
+// 替换模板中的占位符
+function applyTemplate(template: string, variables: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+  }
+  return result;
+}
 
 // 创建 OpenAI 客户端实例
 export function createLLMClient(provider: LLMProvider, apiKey: string): OpenAI | null {
@@ -54,7 +65,12 @@ export function validateLLMConfig(): { isValid: boolean; error?: string } {
 // 发送消息到 LLM
 export async function sendMessageToLLM(
   message: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  templateVariables?: {
+    content?: string;
+    instruction?: string;
+    language?: string;
+  }
 ): Promise<{ success: boolean; content?: string; error?: string }> {
   const client = getCurrentLLMClient();
   const { model } = useConfigStore.getState();
@@ -67,11 +83,24 @@ export async function sendMessageToLLM(
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
     
-    if (systemPrompt) {
-      messages.push({ role: 'system', content: systemPrompt });
+    // 如果提供了模板变量，使用模板
+    if (templateVariables) {
+      const finalSystemPrompt = systemPrompt || SYSTEM_TEMPLATE;
+      messages.push({ role: 'system', content: finalSystemPrompt });
+      
+      const userMessage = applyTemplate(USER_TEMPLATE, {
+        content: templateVariables.content || '',
+        instruction: templateVariables.instruction || message,
+        language: templateVariables.language || 'en',
+      });
+      messages.push({ role: 'user', content: userMessage });
+    } else {
+      // 否则使用原始方式
+      if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+      }
+      messages.push({ role: 'user', content: message });
     }
-    
-    messages.push({ role: 'user', content: message });
 
     const completion = await client.chat.completions.create({
       model,
@@ -99,7 +128,12 @@ export async function sendMessageToLLM(
 // 创建流式响应
 export async function* streamMessageToLLM(
   message: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  templateVariables?: {
+    content?: string;
+    instruction?: string;
+    language?: string;
+  }
 ): AsyncGenerator<{ chunk?: string; error?: string; done?: boolean }> {
   const client = getCurrentLLMClient();
   const { model } = useConfigStore.getState();
@@ -113,11 +147,24 @@ export async function* streamMessageToLLM(
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
     
-    if (systemPrompt) {
-      messages.push({ role: 'system', content: systemPrompt });
+    // 如果提供了模板变量，使用模板
+    if (templateVariables) {
+      const finalSystemPrompt = systemPrompt || SYSTEM_TEMPLATE;
+      messages.push({ role: 'system', content: finalSystemPrompt });
+      
+      const userMessage = applyTemplate(USER_TEMPLATE, {
+        content: templateVariables.content || '',
+        instruction: templateVariables.instruction || message,
+        language: templateVariables.language || 'en',
+      });
+      messages.push({ role: 'user', content: userMessage });
+    } else {
+      // 否则使用原始方式
+      if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+      }
+      messages.push({ role: 'user', content: message });
     }
-    
-    messages.push({ role: 'user', content: message });
 
     const stream = await client.chat.completions.create({
       model,
