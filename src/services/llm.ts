@@ -55,7 +55,7 @@ export function validateLLMConfig(): { isValid: boolean; error?: string } {
   if (!apiKey) {
     return { 
       isValid: false, 
-      error: `请先在配置中设置 ${provider === 'openai' ? 'OpenAI' : 'DeepSeek'} API Key` 
+      error: `Please set ${provider === 'openai' ? 'OpenAI' : 'DeepSeek'} API Key in settings` 
     };
   }
 
@@ -112,7 +112,7 @@ export async function sendMessageToLLM(
     const content = completion.choices[0]?.message?.content;
     
     if (!content) {
-      return { success: false, error: '未收到有效响应' };
+      return { success: false, error: 'No valid response received' };
     }
 
     return { success: true, content };
@@ -120,7 +120,7 @@ export async function sendMessageToLLM(
     console.error('LLM 请求失败:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : '请求失败，请稍后重试' 
+      error: error instanceof Error ? error.message : 'Request failed, please try again later' 
     };
   }
 }
@@ -185,7 +185,7 @@ export async function* streamMessageToLLM(
   } catch (error) {
     console.error('LLM 流式请求失败:', error);
     yield { 
-      error: error instanceof Error ? error.message : '请求失败，请稍后重试',
+      error: error instanceof Error ? error.message : 'Request failed, please try again later',
       done: true 
     };
   }

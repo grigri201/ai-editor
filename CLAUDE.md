@@ -63,7 +63,7 @@ No test commands are currently configured in this project.
 
 5. **Page Layout**
    - Main editor page (`src/app/page.tsx`): Full-width editor with fixed prompt bar
-   - Config page (`src/app/config/page.tsx`): API key and model configuration
+   - Settings page (`src/app/settings/page.tsx`): API key and model configuration
    - ChatGPT-style prompt bar with integrated send button and menu
 
 ### File Structure
@@ -72,7 +72,7 @@ No test commands are currently configured in this project.
 src/
 ├── app/                    # Next.js app directory
 │   ├── page.tsx           # Main editor page
-│   ├── config/page.tsx    # Configuration page
+│   ├── settings/page.tsx  # Settings page (previously config)
 │   └── markdown-editor.css # Custom styles
 ├── components/
 │   └── MarkdownEditor.tsx # Main editor component
@@ -132,12 +132,20 @@ The LLM service uses a DIFF-based format for article editing:
 
 ### UI Layout
 
-- **Main Editor**: Full viewport height, no top navbar
-- **Prompt Bar**: Fixed at bottom, ChatGPT-style with:
+- **Main Editor**: 
+  - Full viewport height with min-height calculation (100vh - padding - prompt bar)
+  - No top navbar, clean interface
+  - Editor placeholder: "Start writing your content, or let AI help you create in the prompt bar below..."
+- **Prompt Bar**: 
+  - Fixed at bottom, ChatGPT-style design
   - Auto-resizing textarea (1-4 lines)
   - Send button (Enter to send, Shift+Enter for new line)
-  - Menu button (...) for accessing configuration
-- **Configuration Page**: Dark theme with API key and model selection
+  - Menu button with settings link
+  - Buttons vertically centered with `top-1/2 -translate-y-1/2`
+- **Settings Page**: 
+  - Consistent theme with main page (light/dark mode support)
+  - Back navigation to editor
+  - Inline save messages instead of alerts
 
 ## Technical Details
 
@@ -162,5 +170,5 @@ The LLM service uses a DIFF-based format for article editing:
 - All DOM manipulations use modern Selection/Range APIs instead of deprecated execCommand
 - Code blocks require special handling as they span multiple lines
 - AI responses currently log to console (TODO: integrate into editor)
-- Always output in Chinese when interacting with the codebase (per CLAUDE.local.md)
-- Do not start dev server, use browser-mcp to debug directly (per CLAUDE.local.md)
+- All user-facing text is in English
+- Settings route is `/settings` (not `/config`)

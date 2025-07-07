@@ -13,71 +13,7 @@ export default function Home() {
   const { provider, theme } = useConfigStore();
   const [configError, setConfigError] = useState<string>('');
   
-  const [markdown, setMarkdown] = useState(`# Markdown 编辑器示例
-
-## 标题
-# H1 一级标题
-## H2 二级标题  
-### H3 三级标题
-#### H4 四级标题
-##### H5 五级标题
-###### H6 六级标题
-
-## 文本样式
-**粗体** __粗体__ *斜体* _斜体_  
-**_粗斜体_** __*粗斜体*__ ~~删除线~~
-
-## 列表
-- 无序列表
-  - 嵌套项目
-    - 深层嵌套
-* 使用星号
-+ 使用加号
-
-1. 有序列表
-2. 第二项
-   1. 子项目
-
-- [x] 已完成任务
-- [ ] 未完成任务
-  - [x] 嵌套任务
-
-## 链接和代码
-[链接文本](https://github.com "标题")  
-行内代码 \`code\`
-
-\`\`\`javascript
-// 代码块
-const greeting = "Hello";
-console.log(greeting);
-\`\`\`
-
-\`\`\`python
-# Python 示例
-print("Hello")
-\`\`\`
-
-\`\`\`
-无语言标识代码块
-\`\`\`
-
-## 引用
-> 单行引用
-
-> 多行引用
-> 继续引用
-
-> 一级引用
->> 二级嵌套
->>> 三级嵌套
-
-> 引用中的 **粗体** 和 \`代码\`
-> - 引用中的列表
-
-## 分隔线
----
-
-**提示**：编辑器支持完整的 GFM 语法！`);
+  const [markdown, setMarkdown] = useState('');
 
   const editorRef = useRef<MarkdownEditorRef>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -108,7 +44,7 @@ print("Hello")
 
     const validation = validateLLMConfig();
     if (!validation.isValid) {
-      setConfigError(validation.error || '配置无效');
+      setConfigError(validation.error || 'Invalid configuration');
       return;
     }
 
@@ -140,12 +76,14 @@ print("Hello")
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* 主内容区域 - 直接从顶部开始 */}
-      <div className="w-[90%] max-w-[1280px] mx-auto pt-10 pb-30">
-        <MarkdownEditor
-          ref={editorRef}
-          value={markdown}
-          onChange={(value) => setMarkdown(value || '')}
-        />
+      <div className="w-[90%] max-w-[1280px] mx-auto pt-10 pb-24">
+        <div className="min-h-[calc(100vh-10rem)]">
+          <MarkdownEditor
+            ref={editorRef}
+            value={markdown}
+            onChange={(value) => setMarkdown(value || '')}
+          />
+        </div>
       </div>
       
       {/* Fixed Prompt Bar - ChatGPT Style */}
@@ -161,7 +99,7 @@ print("Hello")
                   handleSendMessage();
                 }
               }}
-              placeholder="发送消息..."
+              placeholder="Send message..."
               className={`w-full px-4 py-3 pr-16 rounded-xl resize-none focus:outline-none focus:ring-1 border ${
                 theme === 'dark' 
                   ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-400 border-gray-600' 
@@ -181,7 +119,7 @@ print("Hello")
             />
             
             {/* 按钮组 - 放在输入框内部右侧 */}
-            <div className="absolute right-2 bottom-2 flex items-center gap-1">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {/* 发送按钮 */}
               <button
                 onClick={handleSendMessage}
@@ -195,7 +133,7 @@ print("Hello")
                     ? 'text-gray-300 hover:bg-gray-600'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
-                title={configError || "发送消息 (Enter)"}
+                title={configError || "Send message (Enter)"}
               >
                 {isLoading ? (
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -230,7 +168,7 @@ print("Hello")
                     theme === 'dark' ? 'bg-gray-700' : 'bg-white border border-gray-200'
                   }`}>
                     <Link
-                      href="/config"
+                      href="/settings"
                       className={`block px-4 py-2 text-sm transition-colors ${
                         theme === 'dark'
                           ? 'text-gray-200 hover:bg-gray-600'
@@ -238,7 +176,7 @@ print("Hello")
                       }`}
                       onClick={() => setShowMenu(false)}
                     >
-                      配置
+                      Settings
                     </Link>
                   </div>
                 )}
