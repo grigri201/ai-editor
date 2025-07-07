@@ -13,7 +13,126 @@ export default function Home() {
   const { provider, theme } = useConfigStore();
   const [configError, setConfigError] = useState<string>('');
   
-  const [markdown, setMarkdown] = useState('');
+  const [markdown, setMarkdown] = useState(`# Markdown 编辑器功能展示
+
+这是一个支持 **GFM (GitHub Flavored Markdown)** 的编辑器，具有实时渲染和语法高亮功能。
+
+## 文本格式
+
+- **粗体文本** 或 __粗体文本__
+- *斜体文本* 或 _斜体文本_
+- ~~删除线文本~~
+- \`行内代码\`
+- ==高亮文本== 或 =={yellow}黄色高亮==
+- =={red}红色文本== 和 =={bg:green,color:white}绿底白字==
+- =={+}新增的内容== 和 =={-}删除的内容==
+- =={blue}蓝色背景== 和 =={purple}紫色背景==
+
+## 标题层级
+
+### 三级标题
+#### 四级标题
+##### 五级标题
+###### 六级标题
+
+## 列表功能
+
+### 无序列表
+- 项目 1
+- 项目 2
+  - 嵌套项目 2.1
+  - 嵌套项目 2.2
+    - 深层嵌套 2.2.1
+- 项目 3
+
+### 有序列表
+1. 第一步
+2. 第二步
+   1. 子步骤 2.1
+   2. 子步骤 2.2
+3. 第三步
+
+### 任务列表
+- [x] 已完成的任务
+- [ ] 待完成的任务
+- [ ] 另一个待办事项
+  - [x] 已完成的子任务
+  - [ ] 待完成的子任务
+
+## 引用块
+
+> 这是一个引用块
+> 可以包含多行内容
+
+> 引用块也可以嵌套
+>> 这是嵌套的引用
+>>> 更深层的嵌套
+
+## 代码块
+
+\`\`\`javascript
+// JavaScript 代码示例
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log(fibonacci(10)); // 输出: 55
+\`\`\`
+
+\`\`\`python
+# Python 代码示例
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+
+print(quicksort([3, 6, 8, 10, 1, 2, 1]))
+\`\`\`
+
+## 链接和图片
+
+- [GitHub](https://github.com)
+- [OpenAI](https://openai.com)
+- [本地链接](#标题层级)
+
+图片语法（暂不支持渲染）：
+![替代文本](https://example.com/image.png)
+
+## 表格（语法展示）
+
+| 列 1 | 列 2 | 列 3 |
+|------|------|------|
+| A1   | B1   | C1   |
+| A2   | B2   | C2   |
+| A3   | B3   | C3   |
+
+## 分隔线
+
+---
+
+## 键盘快捷键
+
+- **Tab**: 增加列表缩进
+- **Shift+Tab**: 减少列表缩进
+- **Enter**: 在列表中自动创建新项
+- **Backspace**: 在列表项开头删除列表标记
+
+## AI 集成
+
+在底部的输入框中输入指令，AI 可以帮助你：
+- 改进文本
+- 生成内容
+- 回答问题
+- 提供建议
+
+---
+
+*提示：尝试编辑这些内容，观察实时渲染效果！*`);
 
   const editorRef = useRef<MarkdownEditorRef>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -87,7 +206,9 @@ export default function Home() {
       </div>
       
       {/* Fixed Prompt Bar - ChatGPT Style */}
-      <div className={`fixed bottom-0 left-0 right-0 border-t ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <div className={`fixed bottom-0 left-0 right-0 border-t ${
+        theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="relative">
             <textarea
@@ -101,8 +222,8 @@ export default function Home() {
               }}
               placeholder="Send message..."
               className={`w-full px-4 py-3 pr-16 rounded-xl resize-none focus:outline-none focus:ring-1 border ${
-                theme === 'dark' 
-                  ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-400 border-gray-600' 
+                theme === 'dark'
+                  ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-500 border-gray-600'
                   : 'bg-gray-50 text-gray-900 focus:ring-gray-300 placeholder-gray-400 border-gray-200'
               }`}
               style={{
@@ -130,7 +251,7 @@ export default function Home() {
                     : isLoading
                     ? 'text-gray-500 cursor-wait'
                     : theme === 'dark'
-                    ? 'text-gray-300 hover:bg-gray-600'
+                    ? 'text-gray-400 hover:bg-gray-700'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
                 title={configError || "Send message (Enter)"}
@@ -152,9 +273,7 @@ export default function Home() {
                 <button
                   onClick={() => setShowMenu(!showMenu)}
                   className={`p-2 rounded-lg transition-all ${
-                    theme === 'dark'
-                      ? 'text-gray-400 hover:bg-gray-600'
-                      : 'text-gray-500 hover:bg-gray-100'
+                    theme === 'dark' ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,15 +283,13 @@ export default function Home() {
                 
                 {/* 下拉菜单 */}
                 {showMenu && (
-                  <div className={`absolute bottom-full right-0 mb-2 rounded-lg shadow-lg py-1 min-w-[160px] ${
-                    theme === 'dark' ? 'bg-gray-700' : 'bg-white border border-gray-200'
+                  <div className={`absolute bottom-full right-0 mb-2 rounded-lg shadow-lg py-1 min-w-[160px] border ${
+                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                   }`}>
                     <Link
                       href="/settings"
                       className={`block px-4 py-2 text-sm transition-colors ${
-                        theme === 'dark'
-                          ? 'text-gray-200 hover:bg-gray-600'
-                          : 'text-gray-700 hover:bg-gray-50'
+                        theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
                       }`}
                       onClick={() => setShowMenu(false)}
                     >

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>高亮测试</title>
+    <style>
+        .markdown-syntax {
+            color: #6b7280;
+            opacity: 0.7;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .markdown-highlight {
+            padding: 0.125em 0.25em;
+            border-radius: 0.125em;
+            font-weight: inherit;
+        }
+    </style>
+</head>
+<body>
+    <h1>高亮语法测试结果</h1>
+    <p>默认高亮：<span class="markdown-syntax">==</span><mark class="markdown-highlight" style="background-color: #ffeb3b;">测试文本</mark><span class="markdown-syntax">==</span></p>
+    <p>新增内容：<span class="markdown-syntax">==</span><span class="markdown-syntax">{+}</span><mark class="markdown-highlight" style="color: #22863a; background-color: #e6ffed;">新增内容</mark><span class="markdown-syntax">==</span></p>
+    <p>删除内容：<span class="markdown-syntax">==</span><span class="markdown-syntax">{-}</span><mark class="markdown-highlight" style="color: #b31d28; background-color: #ffeef0;">删除内容</mark><span class="markdown-syntax">==</span></p>
+    <p>自定义红色：<span class="markdown-syntax">==</span><span class="markdown-syntax">{color:red}</span><mark class="markdown-highlight" style="color: red;">红色文字</mark><span class="markdown-syntax">==</span></p>
+</body>
+</html>

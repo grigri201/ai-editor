@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ConfigState, LLMProvider, LLMModel, DEFAULT_MODELS, PROVIDER_MODELS, Theme } from '@/types/config';
+import { ConfigState, LLMProvider, LLMModel, DEFAULT_MODELS, PROVIDER_MODELS } from '@/types/config';
 
 // 简单的加密解密函数（仅用于基本保护，不是真正的安全加密）
 const encodeApiKey = (key: string): string => {
@@ -23,7 +23,6 @@ export const useConfigStore = create<ConfigState>()(
       apiKey: '',
       provider: 'deepseek' as LLMProvider,
       model: 'deepseek-chat' as LLMModel,
-      theme: 'light' as Theme,
 
       setApiKey: (key: string) => {
         set({ apiKey: encodeApiKey(key) });
@@ -45,16 +44,11 @@ export const useConfigStore = create<ConfigState>()(
         set({ model });
       },
 
-      setTheme: (theme: Theme) => {
-        set({ theme });
-      },
-
       clearConfig: () => {
         set({ 
           apiKey: '', 
           provider: 'deepseek',
-          model: 'deepseek-chat',
-          theme: 'light'
+          model: 'deepseek-chat'
         });
       },
     }),
@@ -65,7 +59,6 @@ export const useConfigStore = create<ConfigState>()(
         apiKey: state.apiKey,
         provider: state.provider,
         model: state.model,
-        theme: state.theme,
       }),
       // 处理 Next.js hydration 问题
       skipHydration: true,

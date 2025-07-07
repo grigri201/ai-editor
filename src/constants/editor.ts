@@ -22,6 +22,7 @@ export const CSS_CLASSES = {
   QUOTE_CONTENT: 'markdown-quote-content',
   HR: 'markdown-hr',
   HR_LINE: 'markdown-hr-line',
+  HIGHLIGHT: 'markdown-highlight',
 } as const;
 
 // 编辑器配置常量
@@ -61,6 +62,8 @@ export const MARKDOWN_PATTERNS = {
   HORIZONTAL_RULE: /^(---|\*\*\*|___)$/,
   // 代码块
   CODE_BLOCK: /```(\w*)\n([\s\S]*?)```/g,
+  // 高亮
+  HIGHLIGHT: /==(?:\{([^}]+)\})?([^=]+)==/g,
 } as const;
 
 // 键盘按键常量
@@ -68,4 +71,16 @@ export const KEYS = {
   TAB: 'Tab',
   ENTER: 'Enter',
   BACKSPACE: 'Backspace',
+} as const;
+
+// 高亮颜色别名
+export const HIGHLIGHT_ALIASES = {
+  '+': { color: '#22863a', bg: '#e6ffed' },      // GitHub 风格的新增
+  '-': { color: '#b31d28', bg: '#ffeef0' },      // GitHub 风格的删除
+  'yellow': { color: '#000', bg: '#ffeb3b' },    // 黄色高亮
+  'red': { color: '#fff', bg: '#e74c3c' },       // 红色背景
+  'green': { color: '#fff', bg: '#2ecc71' },     // 绿色背景
+  'blue': { color: '#fff', bg: '#3498db' },      // 蓝色背景
+  'purple': { color: '#fff', bg: '#9b59b6' },    // 紫色背景
+  'orange': { color: '#000', bg: '#f39c12' },    // 橙色背景
 } as const;

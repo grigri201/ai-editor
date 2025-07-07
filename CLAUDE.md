@@ -40,31 +40,68 @@ No test commands are currently configured in this project.
      - Theme-aware styling (light/dark mode)
    - Exposes ref methods: insertText, deleteText, getCursorPosition, setCursorPosition
 
-2. **AI Integration** (`src/services/llm.ts`)
-   - Unified LLM service supporting OpenAI and DeepSeek
-   - Template-based prompt system with placeholders
-   - Features:
-     - API key encryption (basic protection)
-     - Provider switching (OpenAI/DeepSeek)
-     - Model selection per provider
-     - Stream and non-stream response support
-     - Template support with `{content}`, `{instruction}`, `{language}` placeholders
-     - Error handling and validation
+   **Alternative Implementation**: `CodeMirrorEditor.tsx` provides a CodeMirror 6-based editor with enhanced features (syntax highlighting, better performance). To switch editors, change the import in `src/app/page.tsx`
+
+2. **AI Integration Architecture**
+   - **LLM Service** (`src/services/llm.ts`)
+     - Unified interface for OpenAI and DeepSeek APIs
+     - Provider switching with automatic model selection
+     - Stream and non-stream response handling
+     - Basic API key encryption (XOR cipher before localStorage)
+     - Error handling with typed responses
+   
+   - **Configuration** (`src/stores/configStore.ts`)
+     - Zustand store with localStorage persistence
+     - Manages: API keys, provider selection, model, theme
+     - Automatic model updates when switching providers
+     - Models per provider defined in `PROVIDER_MODELS`
 
 3. **Prompt Templates** (`src/prompts/`)
    - `system.ts`: System prompt template for ArticleGen agent (DIFF format)
    - `base.ts`: User prompt template with content/instruction placeholders
    - Templates are TypeScript modules exporting constants
+   - DIFF format specification:
+     - `@line_number` for context lines
+     - `-line content` for deletions
+     - `+line content` for additions
+     - All responses end with `[EOF]` marker
 
-4. **Configuration System** (`src/stores/configStore.ts`)
-   - Zustand store with localStorage persistence
-   - Manages: API keys, LLM provider, model selection, theme
-   - Automatic model switching when changing providers
+### Supported Markdown Syntax
 
-5. **Page Layout**
-   - Main editor page (`src/app/page.tsx`): Full-width editor with fixed prompt bar
-   - Settings page (`src/app/settings/page.tsx`): API key and model configuration
-   - ChatGPT-style prompt bar with integrated send button and menu
+The editor supports the following GFM (GitHub Flavored Markdown) features:
+- Headers (H1-H6)
+- Bold (`**` or `__`), italic (`*` or `_`), strikethrough (`~~`)
+- Ordered/unordered lists with nesting (Tab/Shift+Tab for indentation)
+- Task lists (`- [ ]` and `- [x]`)
+- Code blocks with language highlighting preservation
+- Inline code
+- Links
+- Blockquotes with nesting
+- Horizontal rules
+- **Custom highlight syntax**: `=={style}text==`
+  - Predefined: `{+}` (green/added), `{-}` (red/removed), `{yellow}`, `{red}`, `{green}`, `{blue}`, `{purple}`, `{orange}`
+  - Custom: `{bg:color,color:text-color}`
+
+### Rendering Pipeline
+
+1. User input triggers `handleInput`
+2. Plain text extracted via `getPlainTextFromEditor`
+3. Content debounced (100ms) before rendering
+4. `renderMarkdownContent` processes entire text:
+   - Splits into lines
+   - Handles code blocks specially (preserves language identifier)
+   - Each line processed by `renderMarkdownLine`
+   - Inline syntax processed in order: bold → italic → code → link → strikethrough → highlight
+5. Cursor position saved and restored after DOM update
+
+### List Handling Logic
+
+- **Tab**: Increases indent by 4 spaces (updates numbering for ordered lists)
+- **Shift+Tab**: Decreases indent (recalculates numbering based on context)
+- **Enter**: Creates new list item (empty item exits list)
+- **Backspace** at line start: Merges with previous line
+
+Ordered lists maintain proper numbering when indenting/dedenting based on surrounding context.
 
 ### File Structure
 
@@ -72,10 +109,11 @@ No test commands are currently configured in this project.
 src/
 ├── app/                    # Next.js app directory
 │   ├── page.tsx           # Main editor page
-│   ├── settings/page.tsx  # Settings page (previously config)
+│   ├── settings/page.tsx  # Settings page
 │   └── markdown-editor.css # Custom styles
 ├── components/
-│   └── MarkdownEditor.tsx # Main editor component
+│   ├── MarkdownEditor.tsx # ContentEditable editor
+│   └── CodeMirrorEditor.tsx # CodeMirror 6 editor (alternative)
 ├── services/
 │   └── llm.ts            # LLM integration service
 ├── stores/
@@ -87,65 +125,37 @@ src/
 │   ├── editor.ts         # Editor TypeScript interfaces
 │   └── config.ts         # Configuration types
 ├── constants/
-│   └── editor.ts         # Editor constants and regex patterns
-└── utils/                # Utility functions
+│   └── editor.ts         # Editor constants, regex patterns, highlight aliases
+└── utils/
+    ├── markdown.ts       # Markdown rendering functions
+    ├── cursor.ts         # Cursor position management
+    ├── keyboard.ts       # Keyboard event handlers
+    ├── common.ts         # Common utilities (debounce)
+    ├── codemirror-markdown.ts # CodeMirror Markdown extensions
+    └── codemirror-commands.ts # CodeMirror custom commands
 ```
-
-### Supported Markdown Syntax
-
-The editor supports the following GFM (GitHub Flavored Markdown) features:
-- Headers (H1-H6)
-- Bold (`**` or `__`), italic (`*` or `_`), strikethrough (`~~`)
-- Ordered/unordered lists with nesting
-- Task lists (`- [ ]` and `- [x]`)
-- Code blocks with language highlighting preservation
-- Inline code
-- Links
-- Blockquotes with nesting
-- Horizontal rules
-
-### AI Prompt System
-
-The LLM service uses a DIFF-based format for article editing:
-- System prompt defines ArticleGen agent with DIFF format output
-- User prompt template accepts `{content}`, `{instruction}`, `{language}` variables
-- DIFF format uses `@` for context, `-` for deletions, `+` for additions
-- All responses end with `[EOF]` marker
-
-### Key Implementation Details
-
-- Uses contentEditable instead of textarea for direct manipulation
-- Cursor position is calculated based on plain text offsets
-- Rendering preserves Markdown syntax as gray text (e.g., `**` for bold)
-- HTML is escaped before processing to prevent XSS
-- Chinese input is handled via composition events
-- Multi-line structures (code blocks) are handled separately from single-line rendering
-
-### Styling
-
-- Custom styles in `src/app/markdown-editor.css`
-- Theme system with light/dark mode support
-- Markdown syntax displayed with reduced opacity
-- Uses Tailwind CSS v4 with PostCSS plugin configuration
-- Editor has rounded corners (border-radius: 0.75rem)
-- Responsive layout: 90% width, max 1280px
 
 ### UI Layout
 
 - **Main Editor**: 
   - Full viewport height with min-height calculation (100vh - padding - prompt bar)
   - No top navbar, clean interface
-  - Editor placeholder: "Start writing your content, or let AI help you create in the prompt bar below..."
+  - 90% width, max 1280px, centered
+  - Placeholder: "Start writing your content, or let AI help you create in the prompt bar below..."
+  
 - **Prompt Bar**: 
   - Fixed at bottom, ChatGPT-style design
-  - Auto-resizing textarea (1-4 lines)
+  - Auto-resizing textarea (1-4 lines, max 120px)
   - Send button (Enter to send, Shift+Enter for new line)
   - Menu button with settings link
-  - Buttons vertically centered with `top-1/2 -translate-y-1/2`
+  - Theme-aware styling
+  
 - **Settings Page**: 
-  - Consistent theme with main page (light/dark mode support)
-  - Back navigation to editor
-  - Inline save messages instead of alerts
+  - API key input with show/hide toggle
+  - Provider selection (OpenAI/DeepSeek)
+  - Model selection (updates based on provider)
+  - Theme switcher (light/dark)
+  - Save/Clear buttons with inline feedback
 
 ## Technical Details
 
@@ -155,20 +165,20 @@ The LLM service uses a DIFF-based format for article editing:
 - Module resolution: bundler
 - Path alias: `@/*` → `./src/*`
 
-### Dependencies
-- Next.js 15.3.4 (with App Router)
+### Key Dependencies
+- Next.js 15.3.4 (App Router)
 - React 19.0.0
 - TypeScript 5.x
-- Tailwind CSS v4 (latest PostCSS plugin system)
+- Tailwind CSS v4 (PostCSS plugin)
 - Zustand 5.0.6 (state management)
 - OpenAI SDK 5.8.2
+- CodeMirror 6.x (optional editor)
 
 ### Implementation Notes
-- The editor re-renders content on every input with debouncing
-- Cursor position must be saved before render and restored after
-- List indentation uses 2 spaces per level
-- All DOM manipulations use modern Selection/Range APIs instead of deprecated execCommand
-- Code blocks require special handling as they span multiple lines
+- List indentation uses 4 spaces per level (configured in `EDITOR_CONFIG.LIST_INDENT_SIZE`)
+- All DOM manipulations use modern Selection/Range APIs
+- Chinese input handled via composition events
+- API keys encrypted with basic XOR cipher before localStorage
+- Theme changes update both editor and UI components
 - AI responses currently log to console (TODO: integrate into editor)
 - All user-facing text is in English
-- Settings route is `/settings` (not `/config`)

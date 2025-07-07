@@ -1,4 +1,4 @@
-import { CSS_CLASSES, MARKDOWN_PATTERNS } from '@/constants/editor';
+import { CSS_CLASSES, MARKDOWN_PATTERNS, HIGHLIGHT_ALIASES } from '@/constants/editor';
 
 // 转义 HTML 特殊字符
 export function escapeHtml(text: string): string {
@@ -37,9 +37,48 @@ export function processStrikethrough(text: string): string {
   return text.replace(MARKDOWN_PATTERNS.STRIKETHROUGH, `<span class="${CSS_CLASSES.SYNTAX}">~~</span><del>$1</del><span class="${CSS_CLASSES.SYNTAX}">~~</span>`);
 }
 
+// 解析高亮样式
+export function parseHighlightStyle(style?: string): string {
+  if (!style) return 'background-color: #ffeb3b;'; // 默认黄色
+  
+  // 检查是否是别名
+  const alias = HIGHLIGHT_ALIASES[style as keyof typeof HIGHLIGHT_ALIASES];
+  if (alias) {
+    return `color: ${alias.color}; background-color: ${alias.bg};`;
+  }
+  
+  // 处理自定义样式
+  const styles: string[] = [];
+  const parts = style.split(',');
+  
+  parts.forEach(part => {
+    const [key, value] = part.split(':').map(s => s.trim());
+    if (key === 'color' && value) styles.push(`color: ${value}`);
+    if ((key === 'bg' || key === 'background') && value) {
+      styles.push(`background-color: ${value}`);
+    }
+  });
+  
+  return styles.join('; ') || 'background-color: #ffeb3b;';
+}
+
+// 处理高亮语法
+export function processHighlight(text: string): string {
+  return text.replace(
+    MARKDOWN_PATTERNS.HIGHLIGHT,
+    (match, style, content) => {
+      const styles = parseHighlightStyle(style);
+      return `<span class="${CSS_CLASSES.SYNTAX}">==</span>` +
+             (style ? `<span class="${CSS_CLASSES.SYNTAX}">{${style}}</span>` : '') +
+             `<mark class="${CSS_CLASSES.HIGHLIGHT}" style="${styles}">${escapeHtml(content)}</mark>` +
+             `<span class="${CSS_CLASSES.SYNTAX}">==</span>`;
+    }
+  );
+}
+
 // 处理所有内联语法
 export function processInlineSyntax(text: string): string {
-  return processStrikethrough(processLink(processInlineCode(processItalic(processBold(text)))));
+  return processHighlight(processStrikethrough(processLink(processInlineCode(processItalic(processBold(text))))));
 }
 
 // 渲染单行 Markdown

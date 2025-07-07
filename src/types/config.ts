@@ -16,20 +16,15 @@ export interface ModelConfig {
   models: readonly LLMModel[];
 }
 
-// 主题类型
-export type Theme = 'light' | 'dark';
-
 // 配置状态接口
 export interface ConfigState {
   apiKey: string;
   provider: LLMProvider;
   model: LLMModel;
-  theme: Theme;
   // Actions
   setApiKey: (key: string) => void;
   setProvider: (provider: LLMProvider) => void;
   setModel: (model: LLMModel) => void;
-  setTheme: (theme: Theme) => void;
   clearConfig: () => void;
 }
 

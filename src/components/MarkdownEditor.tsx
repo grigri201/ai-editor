@@ -7,7 +7,6 @@ import { debounce } from '@/utils/common';
 import { renderMarkdownContent, getPlainTextFromEditor } from '@/utils/markdown';
 import { getCursorOffset, setCursorOffset, setCursorInLine } from '@/utils/cursor';
 import { handleTabKey, handleEnterKey, handleBackspaceKey } from '@/utils/keyboard';
-import { useConfigStore } from '@/stores/configStore';
 
 export type { MarkdownEditorRef };
 
@@ -18,7 +17,6 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
     const [isComposing, setIsComposing] = useState(false);
     const isRenderingRef = useRef(false);
     const lastCursorPositionRef = useRef(0);
-    const { theme } = useConfigStore();
 
     // 当内容改变时通知父组件
     const notifyChange = useCallback((newContent: string) => {
@@ -67,6 +65,13 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
       if (!editorRef.current || isRenderingRef.current) return;
       
       isRenderingRef.current = true;
+      
+      // 特殊处理空文本
+      if (!text || text.trim() === '') {
+        editorRef.current.innerHTML = `<div class="${CSS_CLASSES.LINE}" data-line="0"><br></div>`;
+        isRenderingRef.current = false;
+        return;
+      }
       
       // 保存光标位置
       const cursorOffset = getCursorOffsetWrapper();
@@ -149,12 +154,40 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
       e.preventDefault();
       const text = e.clipboardData.getData('text/plain');
       
+      if (!editorRef.current) return;
+      
+      // 如果编辑器为空，先创建一个空行
+      if (!editorRef.current.firstChild) {
+        const line = document.createElement('div');
+        line.className = CSS_CLASSES.LINE;
+        line.setAttribute('data-line', '0');
+        editorRef.current.appendChild(line);
+      }
+      
       const selection = window.getSelection();
       if (!selection || !selection.rangeCount) return;
       
       const range = selection.getRangeAt(0);
+      
+      // 确保光标在行元素内
+      let targetLine = range.startContainer as HTMLElement;
+      while (targetLine && targetLine !== editorRef.current && !targetLine.classList?.contains(CSS_CLASSES.LINE)) {
+        targetLine = targetLine.parentElement as HTMLElement;
+      }
+      
+      if (!targetLine || targetLine === editorRef.current) {
+        targetLine = editorRef.current.querySelector(`.${CSS_CLASSES.LINE}`) as HTMLElement;
+        if (targetLine) {
+          // 将光标移到第一行
+          range.setStart(targetLine, 0);
+          range.setEnd(targetLine, 0);
+        }
+      }
+      
+      // 删除选中内容
       range.deleteContents();
       
+      // 插入文本
       const textNode = document.createTextNode(text);
       range.insertNode(textNode);
       range.setStartAfter(textNode);
@@ -230,7 +263,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
 
 
     return (
-      <div className={`${CSS_CLASSES.EDITOR_WRAPPER} ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className={CSS_CLASSES.EDITOR_WRAPPER}>
         <div
           ref={editorRef}
           contentEditable

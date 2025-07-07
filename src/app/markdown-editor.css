@@ -185,86 +185,13 @@
   margin: 0.5em 0;
 }
 
-/* 暗色模式支持 - 通过类名控制 */
-.dark .markdown-editor-wrapper {
-  background-color: #1f2937;
-  border-radius: 0.75rem;
+/* 高亮样式 */
+.markdown-highlight {
+  padding: 0.125em 0.25em;
+  border-radius: 0.125em;
+  font-weight: inherit;
+  /* 默认样式将被内联样式覆盖 */
 }
-
-.dark .markdown-editor-content {
-  color: #e5e7eb;
-  background-color: #1f2937;
-}
-
-.dark .markdown-editor-content:empty::before {
-  color: #6b7280;
-}
-
-.dark .markdown-syntax {
-  color: #9ca3af;
-}
-
-.dark .markdown-h1,
-.dark .markdown-h2,
-.dark .markdown-h3,
-.dark .markdown-h4,
-.dark .markdown-h5,
-.dark .markdown-h6 {
-  color: #f3f4f6;
-}
-
-.dark .markdown-editor-content strong {
-  color: #f3f4f6;
-}
-
-.dark .markdown-editor-content em {
-  color: #d1d5db;
-}
-
-.dark .markdown-editor-content del {
-  color: #9ca3af;
-}
-
-.dark .markdown-list-content {
-  color: #e5e7eb;
-}
-
-.dark .markdown-inline-code {
-  background-color: #374151;
-  color: #f87171;
-}
-
-.dark .markdown-code-block {
-  color: #e5e7eb;
-  background-color: #1f2937;
-}
-
-.dark .markdown-code-lang {
-  background-color: #030712;
-  color: #9ca3af;
-}
-
-.dark .markdown-link {
-  color: #60a5fa;
-}
-
-.dark .markdown-link:hover {
-  color: #93bbfc;
-}
-
-.dark .markdown-blockquote {
-  border-left-color: #4b5563;
-  color: #9ca3af;
-}
-
-.dark .markdown-hr-line {
-  border-top-color: #374151;
-}
-
-.dark .markdown-renderer.preserve-syntax {
-  color: #e5e7eb;
-}
-
 
 /* 保留语法的渲染器样式 */
 .markdown-renderer.preserve-syntax {

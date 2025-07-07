@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
   if (!isClient) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-lg">Loading...</div>
       </div>
     );
@@ -54,9 +54,7 @@ export default function SettingsPage() {
         <Link 
           href="/"
           className={`inline-flex items-center gap-2 text-sm transition-colors ${
-            theme === 'dark' 
-              ? 'text-gray-400 hover:text-gray-200' 
-              : 'text-gray-600 hover:text-gray-900'
+            theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,16 +66,16 @@ export default function SettingsPage() {
 
       {/* Main content */}
       <div className="w-[90%] max-w-[1280px] mx-auto pb-24">
-        <h1 className={`text-3xl font-bold mb-8 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+        <h1 className={`text-3xl font-bold mb-8 ${
+          theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+        }`}>
           Settings
         </h1>
         
         {/* Settings card */}
-        <div className={`rounded-xl p-8 ${
-          theme === 'dark' 
-            ? 'bg-gray-800 border border-gray-700' 
-            : 'bg-white border border-gray-200 shadow-sm'
-        }`}>
+        <div className={`rounded-xl p-8 shadow-sm ${
+          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        } border`}>
           <div className="space-y-6">
             {/* API Key input */}
             <div>
@@ -95,7 +93,7 @@ export default function SettingsPage() {
                   placeholder="Enter your API Key"
                   className={`w-full px-4 py-3 pr-20 rounded-xl focus:outline-none focus:ring-1 border ${
                     theme === 'dark' 
-                      ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-400 border-gray-600' 
+                      ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-500 border-gray-600' 
                       : 'bg-gray-50 text-gray-900 focus:ring-gray-300 placeholder-gray-400 border-gray-200'
                   }`}
                 />
@@ -103,8 +101,8 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
                   className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                    theme === 'dark'
-                      ? 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+                    theme === 'dark' 
+                      ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' 
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                   }`}
                 >
@@ -165,7 +163,7 @@ export default function SettingsPage() {
               <label htmlFor="theme" className={`block text-sm font-medium mb-2 ${
                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Interface Theme
+                Theme
               </label>
               <select
                 id="theme"
@@ -177,8 +175,8 @@ export default function SettingsPage() {
                     : 'bg-gray-50 text-gray-900 focus:ring-gray-300 border-gray-200'
                 }`}
               >
-                <option value="light">Light Theme</option>
-                <option value="dark">Dark Theme</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
               </select>
             </div>
 
@@ -186,21 +184,13 @@ export default function SettingsPage() {
             <div className="flex gap-4 pt-4">
               <button
                 onClick={handleSave}
-                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-colors ${
-                  theme === 'dark'
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                }`}
+                className="flex-1 px-6 py-3 rounded-xl font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white"
               >
                 Save Settings
               </button>
               <button
                 onClick={handleClear}
-                className={`px-6 py-3 rounded-xl font-medium transition-colors ${
-                  theme === 'dark'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-red-500 hover:bg-red-600 text-white'
-                }`}
+                className="px-6 py-3 rounded-xl font-medium transition-colors bg-red-500 hover:bg-red-600 text-white"
               >
                 Clear Settings
               </button>
@@ -208,11 +198,7 @@ export default function SettingsPage() {
 
             {/* Save message */}
             {saveMessage && (
-              <div className={`text-center py-2 px-4 rounded-lg ${
-                theme === 'dark'
-                  ? 'bg-green-900/50 text-green-300'
-                  : 'bg-green-100 text-green-700'
-              }`}>
+              <div className="text-center py-2 px-4 rounded-lg bg-green-100 text-green-700">
                 {saveMessage}
               </div>
             )}
@@ -220,11 +206,9 @@ export default function SettingsPage() {
         </div>
 
         {/* Current settings preview */}
-        <div className={`mt-8 rounded-xl p-8 ${
-          theme === 'dark' 
-            ? 'bg-gray-800 border border-gray-700' 
-            : 'bg-white border border-gray-200 shadow-sm'
-        }`}>
+        <div className={`mt-8 rounded-xl p-8 shadow-sm ${
+          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        } border`}>
           <h2 className={`text-xl font-semibold mb-4 ${
             theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
           }`}>
@@ -237,8 +221,8 @@ export default function SettingsPage() {
               </span>
               <span className={`font-medium ${
                 apiKeyInput 
-                  ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
-                  : theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                  ? 'text-green-600'
+                  : 'text-gray-400'
               }`}>
                 {apiKeyInput ? 'Set' : 'Not set'}
               </span>
@@ -247,9 +231,7 @@ export default function SettingsPage() {
               <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
                 Provider:
               </span>
-              <span className={`font-medium ${
-                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-              }`}>
+              <span className="font-medium text-blue-600">
                 {provider === 'openai' ? 'OpenAI' : 'DeepSeek'}
               </span>
             </div>
@@ -257,9 +239,7 @@ export default function SettingsPage() {
               <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
                 Model:
               </span>
-              <span className={`font-medium ${
-                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-              }`}>
+              <span className="font-medium text-blue-600">
                 {model}
               </span>
             </div>
@@ -267,10 +247,8 @@ export default function SettingsPage() {
               <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
                 Theme:
               </span>
-              <span className={`font-medium ${
-                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-              }`}>
-                {theme === 'light' ? 'Light' : 'Dark'}
+              <span className="font-medium text-blue-600">
+                {theme === 'dark' ? 'Dark' : 'Light'}
               </span>
             </div>
           </div>
