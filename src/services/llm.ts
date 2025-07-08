@@ -105,7 +105,7 @@ export async function sendMessageToLLM(
     const completion = await client.chat.completions.create({
       model,
       messages,
-      temperature: 0.7,
+      temperature: 0.3, // 降低 temperature 以获得更一致的输出
       max_tokens: 2000,
     });
 
@@ -169,7 +169,7 @@ export async function* streamMessageToLLM(
     const stream = await client.chat.completions.create({
       model,
       messages,
-      temperature: 0.7,
+      temperature: 0.3, // 降低 temperature 以获得更一致的输出
       max_tokens: 2000,
       stream: true,
     });

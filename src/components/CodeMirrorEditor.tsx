@@ -267,29 +267,24 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
 
     // 实现 ref 接口
     useImperativeHandle(ref, () => ({
-      insertText: (text: string) => {
+      insertText: (position: number, text: string) => {
         if (!viewRef.current) return;
 
         const view = viewRef.current;
-        const { from, to } = view.state.selection.main;
         
         view.dispatch({
-          changes: { from, to, insert: text },
-          selection: { anchor: from + text.length },
+          changes: { from: position, to: position, insert: text },
         });
         
         view.focus();
       },
-      deleteText: (length: number) => {
+      deleteText: (position: number, length: number) => {
         if (!viewRef.current) return;
 
         const view = viewRef.current;
-        const { from } = view.state.selection.main;
-        const deleteFrom = Math.max(0, from - length);
         
         view.dispatch({
-          changes: { from: deleteFrom, to: from },
-          selection: { anchor: deleteFrom },
+          changes: { from: position, to: position + length },
         });
       },
       getCursorPosition: () => {
@@ -303,6 +298,29 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
           selection: { anchor: position },
         });
         viewRef.current.focus();
+      },
+      getValue: () => {
+        if (!viewRef.current) return '';
+        return viewRef.current.state.doc.toString();
+      },
+      setValue: (text: string) => {
+        if (!viewRef.current) return;
+        
+        const view = viewRef.current;
+        const currentContent = view.state.doc.toString();
+        
+        view.dispatch({
+          changes: { from: 0, to: currentContent.length, insert: text },
+        });
+      },
+      replaceRange: (text: string, from: number, to: number) => {
+        if (!viewRef.current) return;
+        
+        const view = viewRef.current;
+        
+        view.dispatch({
+          changes: { from, to, insert: text },
+        });
       },
     }));
 

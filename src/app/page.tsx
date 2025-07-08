@@ -3,8 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import CodeMirrorEditor, { MarkdownEditorRef } from '@/components/CodeMirrorEditor';
-import { useConfigStore, getDecryptedApiKey } from '@/stores/configStore';
+import DiffPreview from '@/components/DiffPreview';
+import { useConfigStore, getDecryptedApiKey, hydrateConfigStore } from '@/stores/configStore';
 import { validateLLMConfig, sendMessageToLLM } from '@/services/llm';
+import { processAIResponse, applyDiffPreviews, acceptDiffChanges, rejectDiffChanges } from '@/utils/ai-response-handler';
+import { DiffPreviewItem } from '@/types/diff';
+import { testDiffParser } from '@/utils/test-diff-parser';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -12,6 +16,7 @@ export default function Home() {
   const [showMenu, setShowMenu] = useState(false);
   const { provider } = useConfigStore();
   const [configError, setConfigError] = useState<string>('');
+  const [diffPreviews, setDiffPreviews] = useState<DiffPreviewItem[]>([]);
   
   const [markdown, setMarkdown] = useState(`# Markdown 编辑器功能展示
 
@@ -134,6 +139,11 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
   const editorRef = useRef<MarkdownEditorRef>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // 在客户端初始化配置存储
+  useEffect(() => {
+    hydrateConfigStore();
+  }, []);
+
   // 处理点击外部关闭菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -153,10 +163,54 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
     const validation = validateLLMConfig();
     setConfigError(validation.error || '');
   }, [provider]);
+  
+  // 测试 DIFF 解析器（仅开发环境）
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      (window as any).testDiffParser = testDiffParser;
+      console.log('DIFF 解析器测试已加载，在控制台运行 testDiffParser() 进行测试');
+    }
+  }, []);
+
+  // 处理接受单个修改
+  const handleAcceptDiff = (id: string) => {
+    setDiffPreviews(prev => 
+      prev.map(p => p.id === id ? { ...p, accepted: true } : p)
+    );
+  };
+
+  // 处理拒绝单个修改
+  const handleRejectDiff = (id: string) => {
+    setDiffPreviews(prev => 
+      prev.map(p => p.id === id ? { ...p, rejected: true } : p)
+    );
+  };
+
+  // 处理接受所有修改
+  const handleAcceptAll = () => {
+    if (!editorRef.current) return;
+    
+    // 接受所有修改（移除高亮标记）
+    acceptDiffChanges(editorRef.current);
+    
+    // 清空预览
+    setDiffPreviews([]);
+  };
+
+  // 处理拒绝所有修改
+  const handleRejectAll = () => {
+    if (!editorRef.current) return;
+    
+    // 拒绝所有修改（恢复原始内容）
+    rejectDiffChanges(editorRef.current);
+    
+    // 清空预览
+    setDiffPreviews([]);
+  };
 
   // 处理发送消息
   const handleSendMessage = async () => {
-    if (!prompt.trim() || isLoading) return;
+    if (!prompt.trim() || isLoading || !editorRef.current) return;
 
     const validation = validateLLMConfig();
     if (!validation.isValid) {
@@ -166,23 +220,52 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
 
     setIsLoading(true);
     try {
-      const result = await sendMessageToLLM(prompt);
+      // 获取当前编辑器内容
+      const currentContent = editorRef.current.getValue();
+      
+      // 发送消息给 AI，使用模板变量传递内容和指令
+      const result = await sendMessageToLLM(prompt, undefined, {
+        content: currentContent,
+        instruction: prompt,
+        language: 'zh-CN'
+      });
+      
       if (result.success && result.content) {
-        // 暂时只在控制台显示结果
-        console.log('AI Response:', result.content);
-        // 清空输入框
-        setPrompt('');
-        // 重置输入框高度
-        const textarea = document.querySelector('textarea');
-        if (textarea) {
-          textarea.style.height = 'auto';
+        console.log('AI 原始响应:', result.content);
+        
+        // 处理 AI 响应
+        const diffResult = processAIResponse(result.content, currentContent);
+        
+        if (diffResult.success && diffResult.previews.length > 0) {
+          // 设置预览
+          setDiffPreviews(diffResult.previews);
+          
+          // 应用 diff 到编辑器（带高亮标记）
+          applyDiffPreviews(editorRef.current, diffResult.previews, true);
+          
+          // 清空输入框
+          setPrompt('');
+          // 重置输入框高度
+          const textarea = document.querySelector('textarea');
+          if (textarea) {
+            textarea.style.height = 'auto';
+          }
+        } else if (!diffResult.success) {
+          console.error('DIFF 解析错误:', diffResult.error);
+          console.error('AI 原始响应长度:', result.content.length);
+          console.error('AI 响应前100字符:', result.content.substring(0, 100));
+          alert(`处理 AI 响应时出错: ${diffResult.error}`);
+        } else {
+          console.log('AI 未返回任何修改');
+          console.log('解析结果:', diffResult);
         }
-        // TODO: 处理 AI 响应
       } else {
         console.error('Error:', result.error);
+        alert(`发送消息失败: ${result.error}`);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
+      alert('发送消息时出现错误');
     } finally {
       setIsLoading(false);
     }
@@ -201,6 +284,16 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
           />
         </div>
       </div>
+      
+      {/* Diff Preview */}
+      <DiffPreview
+        previews={diffPreviews}
+        onAccept={handleAcceptDiff}
+        onReject={handleRejectDiff}
+        onAcceptAll={handleAcceptAll}
+        onRejectAll={handleRejectAll}
+        isLoading={isLoading}
+      />
       
       {/* Fixed Prompt Bar - ChatGPT Style */}
       <div className="fixed bottom-0 left-0 right-0 border-t bg-white border-gray-200">

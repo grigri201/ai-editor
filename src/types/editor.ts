@@ -1,9 +1,12 @@
 // 编辑器引用接口
 export interface MarkdownEditorRef {
-  insertText: (text: string) => void;
-  deleteText: (length: number) => void;
+  insertText: (position: number, text: string) => void;
+  deleteText: (position: number, length: number) => void;
   getCursorPosition: () => number;
   setCursorPosition: (position: number) => void;
+  getValue: () => string;
+  setValue: (text: string) => void;
+  replaceRange: (text: string, from: number, to: number) => void;
 }
 
 // 编辑器属性接口

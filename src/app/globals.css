@@ -23,3 +23,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Diff 高亮样式 */
+.cm-highlight {
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* 修复 diff 预览的 z-index 层级 */
+.diff-preview-container {
+  z-index: 50;
+}
