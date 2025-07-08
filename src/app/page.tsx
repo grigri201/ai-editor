@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import MarkdownEditor, { MarkdownEditorRef } from '@/components/MarkdownEditor';
+import CodeMirrorEditor, { MarkdownEditorRef } from '@/components/CodeMirrorEditor';
 import { useConfigStore, getDecryptedApiKey } from '@/stores/configStore';
 import { validateLLMConfig, sendMessageToLLM } from '@/services/llm';
 
@@ -10,7 +10,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const { provider, theme } = useConfigStore();
+  const { provider } = useConfigStore();
   const [configError, setConfigError] = useState<string>('');
   
   const [markdown, setMarkdown] = useState(`# Markdown 编辑器功能展示
@@ -23,10 +23,7 @@ export default function Home() {
 - *斜体文本* 或 _斜体文本_
 - ~~删除线文本~~
 - \`行内代码\`
-- ==高亮文本== 或 =={yellow}黄色高亮==
-- =={red}红色文本== 和 =={bg:green,color:white}绿底白字==
 - =={+}新增的内容== 和 =={-}删除的内容==
-- =={blue}蓝色背景== 和 =={purple}紫色背景==
 
 ## 标题层级
 
@@ -193,11 +190,11 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
 
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gray-50">
       {/* 主内容区域 - 直接从顶部开始 */}
       <div className="w-[90%] max-w-[1280px] mx-auto pt-10 pb-24">
         <div className="min-h-[calc(100vh-10rem)]">
-          <MarkdownEditor
+          <CodeMirrorEditor
             ref={editorRef}
             value={markdown}
             onChange={(value) => setMarkdown(value || '')}
@@ -206,9 +203,7 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
       </div>
       
       {/* Fixed Prompt Bar - ChatGPT Style */}
-      <div className={`fixed bottom-0 left-0 right-0 border-t ${
-        theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
+      <div className="fixed bottom-0 left-0 right-0 border-t bg-white border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="relative">
             <textarea
@@ -221,11 +216,7 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
                 }
               }}
               placeholder="Send message..."
-              className={`w-full px-4 py-3 pr-16 rounded-xl resize-none focus:outline-none focus:ring-1 border ${
-                theme === 'dark'
-                  ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-500 border-gray-600'
-                  : 'bg-gray-50 text-gray-900 focus:ring-gray-300 placeholder-gray-400 border-gray-200'
-              }`}
+              className="w-full px-4 py-3 pr-16 rounded-xl resize-none focus:outline-none focus:ring-1 border bg-gray-50 text-gray-900 focus:ring-gray-300 placeholder-gray-400 border-gray-200"
               style={{
                 minHeight: '44px',
                 maxHeight: '120px',
@@ -250,8 +241,6 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
                     ? 'text-gray-400 cursor-not-allowed'
                     : isLoading
                     ? 'text-gray-500 cursor-wait'
-                    : theme === 'dark'
-                    ? 'text-gray-400 hover:bg-gray-700'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
                 title={configError || "Send message (Enter)"}
@@ -272,9 +261,7 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowMenu(!showMenu)}
-                  className={`p-2 rounded-lg transition-all ${
-                    theme === 'dark' ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
-                  }`}
+                  className="p-2 rounded-lg transition-all text-gray-500 hover:bg-gray-100"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -283,14 +270,10 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
                 
                 {/* 下拉菜单 */}
                 {showMenu && (
-                  <div className={`absolute bottom-full right-0 mb-2 rounded-lg shadow-lg py-1 min-w-[160px] border ${
-                    theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                  }`}>
+                  <div className="absolute bottom-full right-0 mb-2 rounded-lg shadow-lg py-1 min-w-[160px] border bg-white border-gray-200">
                     <Link
                       href="/settings"
-                      className={`block px-4 py-2 text-sm transition-colors ${
-                        theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                      }`}
+                      className="block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-50"
                       onClick={() => setShowMenu(false)}
                     >
                       Settings

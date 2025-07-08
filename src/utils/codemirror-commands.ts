@@ -1,6 +1,7 @@
 import { EditorView } from '@codemirror/view';
 import { EditorState, Transaction, StateCommand } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
+import { insertNewlineContinueMarkup, deleteMarkupBackward } from '@codemirror/lang-markdown';
 
 // 获取当前行的文本
 function getCurrentLine(state: EditorState, pos: number): string {
@@ -62,18 +63,16 @@ function parseListItem(line: string): ListInfo | null {
 }
 
 // 处理列表中的 Enter 键
-export const listEnterCommand: StateCommand = ({ state, dispatch }) => {
+// 使用 CodeMirror 内置的 insertNewlineContinueMarkup，并添加空列表项退出功能
+export const listEnterCommand: StateCommand = (target) => {
+  const { state, dispatch } = target;
   const { from } = state.selection.main;
   const line = state.doc.lineAt(from);
   const lineText = state.sliceDoc(line.from, line.to);
   const listInfo = parseListItem(lineText);
 
-  if (!listInfo) {
-    return false; // 不是列表项，使用默认行为
-  }
-
-  // 如果列表项内容为空，退出列表
-  if (listInfo.content.trim() === '') {
+  // 如果是空列表项，退出列表
+  if (listInfo && listInfo.content.trim() === '') {
     const changes = {
       from: line.from,
       to: line.to,
@@ -86,32 +85,8 @@ export const listEnterCommand: StateCommand = ({ state, dispatch }) => {
     return true;
   }
 
-  // 在行尾按 Enter，创建新的列表项
-  if (from === line.to) {
-    let newLineText = '\n' + listInfo.indent;
-    
-    if (listInfo.isOrdered) {
-      // 有序列表，序号加 1
-      const nextNumber = (listInfo.number || 0) + 1;
-      newLineText += `${nextNumber}. `;
-    } else if (listInfo.marker.includes('[')) {
-      // 任务列表，创建未完成的任务
-      newLineText += `${listInfo.marker.split(' ')[0]} [ ] `;
-    } else {
-      // 无序列表
-      newLineText += `${listInfo.marker} `;
-    }
-
-    if (dispatch) {
-      dispatch(state.update({
-        changes: { from, insert: newLineText },
-        selection: { anchor: from + newLineText.length },
-      }));
-    }
-    return true;
-  }
-
-  return false; // 在行中间，使用默认行为
+  // 否则使用内置的 insertNewlineContinueMarkup
+  return insertNewlineContinueMarkup(target);
 };
 
 // 处理列表中的 Tab 键（增加缩进）
@@ -125,14 +100,14 @@ export const listIndentCommand: StateCommand = ({ state, dispatch }) => {
     return false; // 不是列表项
   }
 
-  // 增加两个空格的缩进
-  const newIndent = listInfo.indent + '  ';
+  // 增加四个空格的缩进
+  const newIndent = listInfo.indent + '    ';
   const newLine = newIndent + (listInfo.isOrdered ? '1. ' : `${listInfo.marker} `) + listInfo.content;
 
   if (dispatch) {
     dispatch(state.update({
       changes: { from: line.from, to: line.to, insert: newLine },
-      selection: { anchor: from + 2 }, // 光标向右移动 2 个位置
+      selection: { anchor: from + 4 }, // 光标向右移动 4 个位置
     }));
   }
   return true;
@@ -145,25 +120,33 @@ export const listDedentCommand: StateCommand = ({ state, dispatch }) => {
   const lineText = state.sliceDoc(line.from, line.to);
   const listInfo = parseListItem(lineText);
 
-  if (!listInfo || listInfo.indent.length < 2) {
+  if (!listInfo || listInfo.indent.length < 4) {
     return false; // 不是列表项或已经在顶层
   }
 
-  // 减少两个空格的缩进
-  const newIndent = listInfo.indent.substring(2);
+  // 减少四个空格的缩进
+  const newIndent = listInfo.indent.substring(4);
   const newLine = newIndent + (listInfo.isOrdered ? '1. ' : `${listInfo.marker} `) + listInfo.content;
 
   if (dispatch) {
     dispatch(state.update({
       changes: { from: line.from, to: line.to, insert: newLine },
-      selection: { anchor: Math.max(line.from, from - 2) }, // 光标向左移动 2 个位置
+      selection: { anchor: Math.max(line.from, from - 4) }, // 光标向左移动 4 个位置
     }));
   }
   return true;
 };
 
 // 智能 Backspace（在列表开头删除列表标记）
-export const listBackspaceCommand: StateCommand = ({ state, dispatch }) => {
+// 首先尝试使用 CodeMirror 内置的 deleteMarkupBackward
+export const listBackspaceCommand: StateCommand = (target) => {
+  // 先尝试内置命令
+  if (deleteMarkupBackward(target)) {
+    return true;
+  }
+  
+  // 如果内置命令没有处理，使用我们的自定义逻辑
+  const { state, dispatch } = target;
   const { from } = state.selection.main;
   const line = state.doc.lineAt(from);
   const lineText = state.sliceDoc(line.from, line.to);

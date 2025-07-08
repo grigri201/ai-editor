@@ -4,14 +4,14 @@ import React, { useRef, useImperativeHandle, forwardRef, useEffect } from 'react
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
 import { EditorState, StateEffect } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
-import { oneDark } from '@codemirror/theme-one-dark';
 import { defaultKeymap, indentWithTab, history, historyKeymap } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { bracketMatching } from '@codemirror/language';
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { MarkdownEditorRef, MarkdownEditorProps } from '@/types/editor';
-import { useConfigStore } from '@/stores/configStore';
+
+export type { MarkdownEditorRef };
 import { createMarkdownExtensions, markdownHighlightStyle } from '@/utils/codemirror-markdown';
 import { HighlightStyle } from '@codemirror/language';
 import { listEnterCommand, listIndentCommand, listDedentCommand, listBackspaceCommand } from '@/utils/codemirror-commands';
@@ -79,6 +79,9 @@ const lightTheme = EditorView.theme({
   '.cm-formatting-task': {
     color: 'rgba(0, 0, 0, 0.3)',
   },
+  '.cm-formatting-highlight': {
+    color: 'rgba(0, 0, 0, 0.3)',
+  },
   // 内容样式
   '.cm-strong': {
     fontWeight: 'bold',
@@ -123,11 +126,11 @@ const lightTheme = EditorView.theme({
   '.cm-quote': {
     color: '#57606a',
     borderLeft: '4px solid #d1d9e0',
-    paddingLeft: '1rem',
+    paddingLeft: '0.5rem',
     marginLeft: '0',
   },
   '.cm-list': {
-    paddingLeft: '2rem',
+    paddingLeft: '0',
   },
   '.cm-code': {
     backgroundColor: 'rgba(175, 184, 193, 0.2)',
@@ -138,7 +141,7 @@ const lightTheme = EditorView.theme({
   },
   '.cm-codeblock': {
     backgroundColor: '#f6f8fa',
-    padding: '1rem',
+    padding: '0.5rem',
     borderRadius: '6px',
     fontSize: '85%',
     lineHeight: '1.45',
@@ -161,72 +164,6 @@ const lightTheme = EditorView.theme({
   },
 }, { dark: false });
 
-// 暗色主题扩展
-const darkThemeExtension = EditorView.theme({
-  '&': {
-    height: '100%',
-    fontSize: '16px',
-  },
-  '.cm-editor': {
-    height: '100%',
-  },
-  '.cm-content': {
-    padding: '1.5rem',
-  },
-  '.cm-line': {
-    padding: '0.125rem 0',
-    lineHeight: '1.5',
-  },
-  // Markdown 语法标记样式 - 暗色模式下的灰色
-  '.cm-formatting': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-strong': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-em': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-strikethrough': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-code': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-code-block': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-link': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-link-string': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-header': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-quote': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-formatting-list': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-url': {
-    color: 'rgba(255, 255, 255, 0.3)',
-  },
-  '.cm-quote': {
-    borderLeftColor: '#30363d',
-  },
-  '.cm-code': {
-    backgroundColor: 'rgba(110, 118, 129, 0.4)',
-  },
-  '.cm-codeblock': {
-    backgroundColor: '#161b22',
-  },
-  '.cm-hr': {
-    borderBottomColor: '#30363d',
-  },
-}, { dark: true });
 
 // 创建自定义高亮样式
 const customHighlightStyle = HighlightStyle.define([
@@ -269,7 +206,7 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
   ({ value, onChange }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
-    const { theme } = useConfigStore();
+    const isUserInputRef = useRef(true);
 
     // 创建编辑器实例
     useEffect(() => {
@@ -281,9 +218,10 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
           ...basicExtensions,
           markdown(),
           ...createMarkdownExtensions(),
-          theme === 'dark' ? [oneDark, darkThemeExtension] : lightTheme,
+          lightTheme,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
+              isUserInputRef.current = true;
               const content = update.state.doc.toString();
               onChange(content);
             }
@@ -302,33 +240,18 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
         view.destroy();
         viewRef.current = null;
       };
-    }, []);
+    }, []); // 只在组件挂载时创建编辑器
 
-    // 更新主题
-    useEffect(() => {
-      if (!viewRef.current) return;
-
-      const currentTheme = theme === 'dark' ? [oneDark, darkThemeExtension] : lightTheme;
-      
-      viewRef.current.dispatch({
-        effects: StateEffect.reconfigure.of([
-          ...basicExtensions,
-          markdown(),
-          ...createMarkdownExtensions(),
-          currentTheme,
-          EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-              const content = update.state.doc.toString();
-              onChange(content);
-            }
-          }),
-        ]),
-      });
-    }, [theme, onChange]);
 
     // 当外部 value 改变时更新内容
     useEffect(() => {
       if (!viewRef.current) return;
+      
+      // 如果是用户输入导致的更新，不需要再次更新编辑器
+      if (isUserInputRef.current) {
+        isUserInputRef.current = false;
+        return;
+      }
       
       const currentContent = viewRef.current.state.doc.toString();
       if (value !== currentContent) {
@@ -384,7 +307,7 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
     }));
 
     return (
-      <div className="h-full w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+      <div className="h-full w-full overflow-hidden rounded-xl border border-gray-200">
         <div ref={editorRef} className="h-full" />
       </div>
     );

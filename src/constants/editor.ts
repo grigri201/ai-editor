@@ -77,10 +77,4 @@ export const KEYS = {
 export const HIGHLIGHT_ALIASES = {
   '+': { color: '#22863a', bg: '#e6ffed' },      // GitHub 风格的新增
   '-': { color: '#b31d28', bg: '#ffeef0' },      // GitHub 风格的删除
-  'yellow': { color: '#000', bg: '#ffeb3b' },    // 黄色高亮
-  'red': { color: '#fff', bg: '#e74c3c' },       // 红色背景
-  'green': { color: '#fff', bg: '#2ecc71' },     // 绿色背景
-  'blue': { color: '#fff', bg: '#3498db' },      // 蓝色背景
-  'purple': { color: '#fff', bg: '#9b59b6' },    // 紫色背景
-  'orange': { color: '#000', bg: '#f39c12' },    // 橙色背景
 } as const;

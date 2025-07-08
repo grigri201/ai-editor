@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an AI-powered Markdown editor built with Next.js 15.3.4 and TypeScript. It provides real-time Markdown rendering while preserving syntax visibility, with integrated AI assistance via OpenAI and DeepSeek APIs.
+This is an AI-powered Markdown editor built with Next.js 15.3.4 and TypeScript. The project uses CodeMirror 6 as its editor engine, providing real-time Markdown rendering with syntax highlighting and AI assistance via OpenAI and DeepSeek APIs.
 
 ## Development Commands
 
@@ -28,19 +28,16 @@ No test commands are currently configured in this project.
 
 ### Core Components
 
-1. **MarkdownEditor** (`src/components/MarkdownEditor.tsx`)
-   - Main editor component using contentEditable
-   - Implements real-time Markdown rendering with syntax preservation
-   - Key features:
-     - Custom cursor position management (getCursorOffset/setCursorOffset)
-     - Debounced rendering (100ms) for performance
-     - Support for Tab/Shift+Tab list indentation
-     - Smart Enter key handling for lists
-     - Backspace at line start merges lines
-     - Theme-aware styling (light/dark mode)
+1. **CodeMirrorEditor** (`src/components/CodeMirrorEditor.tsx`)
+   - Main editor component using CodeMirror 6
+   - Features:
+     - Real-time Markdown syntax highlighting with format markers preserved
+     - Custom highlight syntax: `=={+}content==` (green/added) and `=={-}content==` (red/removed)
+     - Smart list handling with Tab/Shift+Tab indentation
+     - Enhanced Enter and Backspace behavior for lists
+     - Light theme with customized styling
    - Exposes ref methods: insertText, deleteText, getCursorPosition, setCursorPosition
-
-   **Alternative Implementation**: `CodeMirrorEditor.tsx` provides a CodeMirror 6-based editor with enhanced features (syntax highlighting, better performance). To switch editors, change the import in `src/app/page.tsx`
+   - Uses custom ViewPlugins for Markdown formatting and highlight decorations
 
 2. **AI Integration Architecture**
    - **LLM Service** (`src/services/llm.ts`)
@@ -78,21 +75,26 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
 - Links
 - Blockquotes with nesting
 - Horizontal rules
-- **Custom highlight syntax**: `=={style}text==`
-  - Predefined: `{+}` (green/added), `{-}` (red/removed), `{yellow}`, `{red}`, `{green}`, `{blue}`, `{purple}`, `{orange}`
-  - Custom: `{bg:color,color:text-color}`
+- **Custom highlight syntax** (limited to two styles):
+  - `=={+}text==`: Green text on light green background (for additions)
+  - `=={-}text==`: Red text on light red background (for deletions)
 
-### Rendering Pipeline
+### CodeMirror Architecture
 
-1. User input triggers `handleInput`
-2. Plain text extracted via `getPlainTextFromEditor`
-3. Content debounced (100ms) before rendering
-4. `renderMarkdownContent` processes entire text:
-   - Splits into lines
-   - Handles code blocks specially (preserves language identifier)
-   - Each line processed by `renderMarkdownLine`
-   - Inline syntax processed in order: bold → italic → code → link → strikethrough → highlight
-5. Cursor position saved and restored after DOM update
+1. **Editor Setup** (`CodeMirrorEditor.tsx`)
+   - EditorState created with Markdown language support
+   - Custom extensions for syntax highlighting and list handling
+   - ViewPlugins for decorating Markdown syntax markers
+   
+2. **Markdown Extensions** (`codemirror-markdown.ts`)
+   - `markdownSyntaxHighlighting`: Adds CSS classes to format markers
+   - `customHighlightPlugin`: Handles `=={+}` and `=={-}` syntax
+   - Decorations applied via RangeSetBuilder for performance
+   
+3. **Custom Commands** (`codemirror-commands.ts`)
+   - `listEnterCommand`: Uses built-in `insertNewlineContinueMarkup` with empty list detection
+   - `listIndentCommand/listDedentCommand`: Handle Tab/Shift+Tab for list indentation
+   - `listBackspaceCommand`: Combines built-in `deleteMarkupBackward` with custom logic
 
 ### List Handling Logic
 
@@ -103,17 +105,16 @@ The editor supports the following GFM (GitHub Flavored Markdown) features:
 
 Ordered lists maintain proper numbering when indenting/dedenting based on surrounding context.
 
-### File Structure
+### Key Files
 
 ```
 src/
-├── app/                    # Next.js app directory
+├── app/
 │   ├── page.tsx           # Main editor page
 │   ├── settings/page.tsx  # Settings page
 │   └── markdown-editor.css # Custom styles
 ├── components/
-│   ├── MarkdownEditor.tsx # ContentEditable editor
-│   └── CodeMirrorEditor.tsx # CodeMirror 6 editor (alternative)
+│   └── CodeMirrorEditor.tsx # CodeMirror 6 editor component
 ├── services/
 │   └── llm.ts            # LLM integration service
 ├── stores/
@@ -125,12 +126,8 @@ src/
 │   ├── editor.ts         # Editor TypeScript interfaces
 │   └── config.ts         # Configuration types
 ├── constants/
-│   └── editor.ts         # Editor constants, regex patterns, highlight aliases
+│   └── editor.ts         # Editor constants, HIGHLIGHT_ALIASES for {+} and {-}
 └── utils/
-    ├── markdown.ts       # Markdown rendering functions
-    ├── cursor.ts         # Cursor position management
-    ├── keyboard.ts       # Keyboard event handlers
-    ├── common.ts         # Common utilities (debounce)
     ├── codemirror-markdown.ts # CodeMirror Markdown extensions
     └── codemirror-commands.ts # CodeMirror custom commands
 ```
@@ -172,13 +169,13 @@ src/
 - Tailwind CSS v4 (PostCSS plugin)
 - Zustand 5.0.6 (state management)
 - OpenAI SDK 5.8.2
-- CodeMirror 6.x (optional editor)
+- CodeMirror 6.x with @codemirror/lang-markdown
 
 ### Implementation Notes
-- List indentation uses 4 spaces per level (configured in `EDITOR_CONFIG.LIST_INDENT_SIZE`)
-- All DOM manipulations use modern Selection/Range APIs
-- Chinese input handled via composition events
+- CodeMirror 6 handles all text editing and rendering
+- Custom highlights use Decoration.mark with inline styles
+- List indentation fixed at 4 spaces per level
 - API keys encrypted with basic XOR cipher before localStorage
-- Theme changes update both editor and UI components
 - AI responses currently log to console (TODO: integrate into editor)
-- All user-facing text is in English
+- Editor uses a controlled component pattern with value/onChange props
+- Custom CSS applied via EditorView.theme for consistent styling

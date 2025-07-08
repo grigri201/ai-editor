@@ -6,7 +6,7 @@ import { useConfigStore, getDecryptedApiKey, hydrateConfigStore } from '@/stores
 import { PROVIDER_MODELS, LLMProvider, LLMModel } from '@/types/config';
 
 export default function SettingsPage() {
-  const { provider, model, theme, setApiKey, setProvider, setModel, setTheme, clearConfig } = useConfigStore();
+  const { provider, model, setApiKey, setProvider, setModel, clearConfig } = useConfigStore();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -48,14 +48,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gray-50">
       {/* Header with back button */}
       <div className="w-[90%] max-w-[1280px] mx-auto pt-10 pb-4">
         <Link 
           href="/"
-          className={`inline-flex items-center gap-2 text-sm transition-colors ${
-            theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className="inline-flex items-center gap-2 text-sm transition-colors text-gray-600 hover:text-gray-900"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -66,22 +64,16 @@ export default function SettingsPage() {
 
       {/* Main content */}
       <div className="w-[90%] max-w-[1280px] mx-auto pb-24">
-        <h1 className={`text-3xl font-bold mb-8 ${
-          theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-        }`}>
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">
           Settings
         </h1>
         
         {/* Settings card */}
-        <div className={`rounded-xl p-8 shadow-sm ${
-          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        } border`}>
+        <div className="rounded-xl p-8 shadow-sm bg-white border-gray-200 border">
           <div className="space-y-6">
             {/* API Key input */}
             <div>
-              <label htmlFor="apiKey" className={`block text-sm font-medium mb-2 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label htmlFor="apiKey" className="block text-sm font-medium mb-2 text-gray-700">
                 API Key
               </label>
               <div className="relative">
@@ -91,20 +83,12 @@ export default function SettingsPage() {
                   value={apiKeyInput}
                   onChange={(e) => setApiKeyInput(e.target.value)}
                   placeholder="Enter your API Key"
-                  className={`w-full px-4 py-3 pr-20 rounded-xl focus:outline-none focus:ring-1 border ${
-                    theme === 'dark' 
-                      ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 placeholder-gray-500 border-gray-600' 
-                      : 'bg-gray-50 text-gray-900 focus:ring-gray-300 placeholder-gray-400 border-gray-200'
-                  }`}
+                  className="w-full px-4 py-3 pr-20 rounded-xl focus:outline-none focus:ring-1 border bg-gray-50 text-gray-900 focus:ring-gray-300 placeholder-gray-400 border-gray-200"
                 />
                 <button
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
-                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                    theme === 'dark' 
-                      ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' 
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                  }`}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1.5 text-sm rounded-lg transition-colors bg-gray-200 hover:bg-gray-300 text-gray-700"
                 >
                   {showApiKey ? 'Hide' : 'Show'}
                 </button>
@@ -113,20 +97,14 @@ export default function SettingsPage() {
 
             {/* LLM Provider */}
             <div>
-              <label htmlFor="provider" className={`block text-sm font-medium mb-2 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label htmlFor="provider" className="block text-sm font-medium mb-2 text-gray-700">
                 LLM Provider
               </label>
               <select
                 id="provider"
                 value={provider}
                 onChange={(e) => setProvider(e.target.value as LLMProvider)}
-                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-1 border ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 border-gray-600' 
-                    : 'bg-gray-50 text-gray-900 focus:ring-gray-300 border-gray-200'
-                }`}
+                className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-1 border bg-gray-50 text-gray-900 focus:ring-gray-300 border-gray-200"
               >
                 <option value="deepseek">DeepSeek</option>
                 <option value="openai">OpenAI</option>
@@ -135,20 +113,14 @@ export default function SettingsPage() {
 
             {/* Model */}
             <div>
-              <label htmlFor="model" className={`block text-sm font-medium mb-2 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label htmlFor="model" className="block text-sm font-medium mb-2 text-gray-700">
                 Model
               </label>
               <select
                 id="model"
                 value={model}
                 onChange={(e) => setModel(e.target.value as LLMModel)}
-                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-1 border ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 border-gray-600' 
-                    : 'bg-gray-50 text-gray-900 focus:ring-gray-300 border-gray-200'
-                }`}
+                className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-1 border bg-gray-50 text-gray-900 focus:ring-gray-300 border-gray-200"
               >
                 {availableModels.map((m) => (
                   <option key={m} value={m}>
@@ -158,27 +130,6 @@ export default function SettingsPage() {
               </select>
             </div>
 
-            {/* Theme */}
-            <div>
-              <label htmlFor="theme" className={`block text-sm font-medium mb-2 ${
-                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Theme
-              </label>
-              <select
-                id="theme"
-                value={theme}
-                onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
-                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-1 border ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-gray-100 focus:ring-gray-600 border-gray-600' 
-                    : 'bg-gray-50 text-gray-900 focus:ring-gray-300 border-gray-200'
-                }`}
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </div>
 
             {/* Buttons */}
             <div className="flex gap-4 pt-4">
@@ -206,17 +157,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Current settings preview */}
-        <div className={`mt-8 rounded-xl p-8 shadow-sm ${
-          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        } border`}>
-          <h2 className={`text-xl font-semibold mb-4 ${
-            theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-          }`}>
+        <div className="mt-8 rounded-xl p-8 shadow-sm bg-white border-gray-200 border">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">
             Current Settings
           </h2>
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+              <span className="text-gray-600">
                 API Key:
               </span>
               <span className={`font-medium ${
@@ -228,7 +175,7 @@ export default function SettingsPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+              <span className="text-gray-600">
                 Provider:
               </span>
               <span className="font-medium text-blue-600">
@@ -236,19 +183,11 @@ export default function SettingsPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+              <span className="text-gray-600">
                 Model:
               </span>
               <span className="font-medium text-blue-600">
                 {model}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Theme:
-              </span>
-              <span className="font-medium text-blue-600">
-                {theme === 'dark' ? 'Dark' : 'Light'}
               </span>
             </div>
           </div>
