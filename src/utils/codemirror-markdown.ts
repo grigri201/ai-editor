@@ -149,37 +149,70 @@ export const customHighlightPlugin = ViewPlugin.fromClass(
       const text = doc.toString();
       const decorations: { from: number; to: number; decoration: Decoration }[] = [];
       
-      // 正则表达式匹配 =={style}text== 或 ==text==
-      const highlightRegex = /==(?:\{([^}]+)\})?([^=]+)==/g;
+      // 正则表达式匹配组合格式和单独格式
+      // 1. [{-}删除文本{+}添加文本] - 替换
+      // 2. [{-}删除文本] - 纯删除
+      // 3. [{+}添加文本] - 纯添加
+      const highlightRegex = /\[(?:\{-\}([^\{\]]+))?(?:\{\+\}([^\]]+))?\]/g;
       
       let match;
       while ((match = highlightRegex.exec(text)) !== null) {
         const start = match.index;
         const end = start + match[0].length;
-        const style = match[1];
-        const content = match[2];
-        const contentStart = start + 2 + (style ? style.length + 2 : 0);
-        const contentEnd = contentStart + content.length;
+        const deleteText = match[1];
+        const addText = match[2];
         
-        // 只处理支持的高亮样式
-        const highlightStyle = parseHighlightStyle(style);
-        if (highlightStyle) {
-          // 收集语法标记装饰
-          decorations.push({ from: start, to: start + 2, decoration: markdownFormattingHighlightMark }); // 开始 ==
-          if (style) {
-            decorations.push({ from: start + 2, to: start + 2 + style.length + 2, decoration: markdownFormattingHighlightMark }); // {style}
-          }
-          decorations.push({ from: contentEnd, to: end, decoration: markdownFormattingHighlightMark }); // 结束 ==
+        // 跳过空的标记
+        if (!deleteText && !addText) continue;
+        
+        let currentPos = start;
+        
+        // 标记开始 [
+        decorations.push({ from: currentPos, to: currentPos + 1, decoration: markdownFormattingHighlightMark });
+        currentPos++;
+        
+        // 处理删除部分
+        if (deleteText) {
+          // {-}
+          decorations.push({ from: currentPos, to: currentPos + 3, decoration: markdownFormattingHighlightMark });
+          currentPos += 3;
           
-          // 收集高亮内容装饰
-          const decoration = Decoration.mark({
-            attributes: {
-              style: `background-color: ${highlightStyle.backgroundColor};${highlightStyle.color ? ` color: ${highlightStyle.color};` : ''}`,
-              class: 'cm-highlight'
-            }
-          });
-          decorations.push({ from: contentStart, to: contentEnd, decoration });
+          // 删除的内容
+          const deleteStyle = parseHighlightStyle('-');
+          if (deleteStyle) {
+            const decoration = Decoration.mark({
+              attributes: {
+                style: `background-color: ${deleteStyle.backgroundColor}; color: ${deleteStyle.color};`,
+                class: 'cm-highlight cm-highlight-delete'
+              }
+            });
+            decorations.push({ from: currentPos, to: currentPos + deleteText.length, decoration });
+          }
+          currentPos += deleteText.length;
         }
+        
+        // 处理添加部分
+        if (addText) {
+          // {+}
+          decorations.push({ from: currentPos, to: currentPos + 3, decoration: markdownFormattingHighlightMark });
+          currentPos += 3;
+          
+          // 添加的内容
+          const addStyle = parseHighlightStyle('+');
+          if (addStyle) {
+            const decoration = Decoration.mark({
+              attributes: {
+                style: `background-color: ${addStyle.backgroundColor}; color: ${addStyle.color};`,
+                class: 'cm-highlight cm-highlight-add'
+              }
+            });
+            decorations.push({ from: currentPos, to: currentPos + addText.length, decoration });
+          }
+          currentPos += addText.length;
+        }
+        
+        // 标记结束 ]
+        decorations.push({ from: end - 1, to: end, decoration: markdownFormattingHighlightMark });
       }
       
       // 按照 from 位置排序，如果 from 相同则按 to 排序

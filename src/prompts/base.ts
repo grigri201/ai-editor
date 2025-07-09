@@ -1,23 +1,19 @@
-export const USER_TEMPLATE = `You are ArticleGen, an intelligent article generation and editing assistant.
+export const USER_TEMPLATE = `# Edit Request
 
-Current article content:
+## Current Content
 {content}
 
-Language for the returned diff:
-{language}
-
-User instruction:
+## Edit Instruction
 {instruction}
 
-Please apply the instruction to the content and return **only** the modified lines using the DIFF format below (follow the language specified):
+## Language
+{language}
 
-@  move caret the next line of this content [EOL]
--  deletion content [EOL]
-+  addition content [EOL]
-[EOF]
+## Format Reminder
+You MUST follow the DIFF format exactly as specified in your system prompt:
+- @ line: Context BEFORE the change (do not include the text to change)
+- - line: Text to delete (exact match)
+- + line: Text to add
+- End with [EOF]
 
-Rules:
-1. Omit the \`@\` line if the change is at the very top of the article.
-2. Provide only the \`- \` line for deletions, only the \`+ \` line for insertions, or both for replacements.
-3. End every response with \`[EOF]\`.
-4. Keep exact spaces after each diff prefix (\`@\`, \`-\`, \`+\`).`;
+Return ONLY the DIFF. No explanations.`;

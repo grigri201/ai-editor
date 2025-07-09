@@ -100,8 +100,8 @@ function DiffPreviewCard({ preview, onAccept, onReject, disabled }: DiffPreviewC
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     
-    // 匹配 =={+}...== 和 =={-}...==
-    const regex = /==\{([+-])\}([^=]+)==/g;
+    // 匹配组合格式和单独格式
+    const regex = /\[(?:\{-\}([^\{\]]+))?(?:\{\+\}([^\]]+))?\]/g;
     let match;
     
     while ((match = regex.exec(preview.preview)) !== null) {
@@ -114,18 +114,26 @@ function DiffPreviewCard({ preview, onAccept, onReject, disabled }: DiffPreviewC
         );
       }
       
-      // 添加高亮部分
-      const type = match[1];
-      const content = match[2];
-      const className = type === '+' 
-        ? 'bg-green-100 text-green-800 px-1 rounded' 
-        : 'bg-red-100 text-red-800 px-1 rounded line-through';
+      const deleteText = match[1];
+      const addText = match[2];
       
-      parts.push(
-        <span key={`highlight-${match.index}`} className={className}>
-          {content}
-        </span>
-      );
+      // 处理删除部分
+      if (deleteText) {
+        parts.push(
+          <span key={`delete-${match.index}`} className="bg-red-100 text-red-800 px-1 rounded line-through">
+            {deleteText}
+          </span>
+        );
+      }
+      
+      // 处理添加部分
+      if (addText) {
+        parts.push(
+          <span key={`add-${match.index}`} className="bg-green-100 text-green-800 px-1 rounded">
+            {addText}
+          </span>
+        );
+      }
       
       lastIndex = match.index + match[0].length;
     }

@@ -15,6 +15,7 @@ export type { MarkdownEditorRef };
 import { createMarkdownExtensions, markdownHighlightStyle } from '@/utils/codemirror-markdown';
 import { HighlightStyle } from '@codemirror/language';
 import { listEnterCommand, listIndentCommand, listDedentCommand, listBackspaceCommand } from '@/utils/codemirror-commands';
+import { diffInlineControls } from '@/utils/codemirror-diff-inline';
 
 // 自定义明亮主题
 const lightTheme = EditorView.theme({
@@ -218,6 +219,7 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
           ...basicExtensions,
           markdown(),
           ...createMarkdownExtensions(),
+          diffInlineControls,
           lightTheme,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {

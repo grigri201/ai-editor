@@ -30,23 +30,37 @@ export function parseDiff(diffText: string): DiffResult {
       // 如果没有 [EOF]，尝试查找并添加
       if (!cleanText.includes('[EOF]')) {
         // 检查是否有 DIFF 格式的内容（@ 或 + 或 - 开头的行）
-        const hasDiffContent = cleanText.split('\n').some(line => 
-          line.trim().startsWith('@') || 
-          line.trim().startsWith('+') || 
-          line.trim().startsWith('-')
-        );
+        const lines = cleanText.split('\n');
+        const hasDiffContent = lines.some(line => {
+          const trimmed = line.trim();
+          return trimmed.startsWith('@') || 
+                 trimmed.startsWith('+') || 
+                 trimmed.startsWith('-') ||
+                 trimmed.match(/^[@\-+]/); // 也匹配没有空格的格式
+        });
         
         if (hasDiffContent) {
           console.warn('警告：响应中没有 [EOF] 标记，将自动添加');
           cleanText += '\n[EOF]';
         } else {
-          // 如果完全没有 DIFF 格式，可能是 AI 用了其他格式
-          console.error('错误：响应不包含有效的 DIFF 格式');
-          return {
-            success: false,
-            hunks: [],
-            error: 'AI 响应不包含有效的 DIFF 格式（需要以 @、- 或 + 开头的行）',
-          };
+          // 尝试智能解析 AI 的响应
+          console.warn('警告：响应格式不标准，尝试智能解析...');
+          
+          // 查找可能的修改指示
+          const possibleDiff = lines.find(line => 
+            line.includes('改为') || 
+            line.includes('替换') || 
+            line.includes('删除') ||
+            line.includes('添加')
+          );
+          
+          if (!possibleDiff) {
+            return {
+              success: false,
+              hunks: [],
+              error: 'AI 响应不包含有效的 DIFF 格式，请确保 AI 返回标准的 DIFF 格式',
+            };
+          }
         }
       }
     }
@@ -117,13 +131,57 @@ export function parseDiff(diffText: string): DiffResult {
           rawLine: line,
         });
       }
-      // 其他情况视为格式错误
+      // 其他情况，尝试容错处理
       else {
-        return {
-          success: false,
-          hunks: [],
-          error: `第 ${i + 1} 行格式错误：行必须以 @、- 或 + 开头`,
-        };
+        // 跳过空行
+        if (!line.trim()) {
+          continue;
+        }
+        
+        // 尝试识别可能的格式变体
+        // 例如：没有空格的 @、- 或 +
+        if (line.match(/^[@\-+]/)) {
+          console.warn(`第 ${i + 1} 行格式警告：可能缺少空格，行内容: "${line}"`);
+          
+          // 尝试修复格式
+          if (line.startsWith('@')) {
+            // 上下文行
+            if (currentHunk && currentHunk.operations.length > 0) {
+              hunks.push(currentHunk);
+            }
+            currentHunk = {
+              context: line.substring(1).trim(),
+              operations: [],
+            };
+          } else if (line.startsWith('-')) {
+            if (!currentHunk) {
+              console.error(`第 ${i + 1} 行错误：删除操作前需要先有上下文行（@）`);
+              continue;
+            }
+            currentHunk.operations.push({
+              type: DiffOperationType.Delete,
+              content: line.substring(1).trim(),
+              rawLine: line,
+            });
+          } else if (line.startsWith('+')) {
+            if (!currentHunk) {
+              currentHunk = {
+                context: '',
+                operations: [],
+              };
+            }
+            currentHunk.operations.push({
+              type: DiffOperationType.Add,
+              content: line.substring(1).trim(),
+              rawLine: line,
+            });
+          }
+          continue;
+        }
+        
+        // 记录警告但继续处理
+        console.warn(`第 ${i + 1} 行格式警告：无法识别的行格式，跳过该行: "${line}"`);
+        continue;
       }
     }
 
@@ -153,14 +211,26 @@ export function parseDiff(diffText: string): DiffResult {
 export function generateDiffPreview(hunk: DiffHunk): string {
   const parts: string[] = [];
   
-  // 处理每个操作
-  for (const op of hunk.operations) {
-    if (op.type === DiffOperationType.Delete) {
-      // 删除的内容用 =={-}...== 包裹
-      parts.push(`=={-}${op.content}==`);
-    } else if (op.type === DiffOperationType.Add) {
-      // 添加的内容用 =={+}...== 包裹
-      parts.push(`=={+}${op.content}==`);
+  // 检查是否是替换操作（先删除后添加）
+  let i = 0;
+  while (i < hunk.operations.length) {
+    const currentOp = hunk.operations[i];
+    const nextOp = hunk.operations[i + 1];
+    
+    // 如果当前是删除，下一个是添加，合并为替换操作
+    if (currentOp.type === DiffOperationType.Delete && 
+        nextOp && nextOp.type === DiffOperationType.Add) {
+      // 组合格式：[{-}删除内容{+}添加内容]
+      parts.push(`[{-}${currentOp.content}{+}${nextOp.content}]`);
+      i += 2; // 跳过下一个操作
+    } else if (currentOp.type === DiffOperationType.Delete) {
+      // 纯删除：[{-}删除内容]
+      parts.push(`[{-}${currentOp.content}]`);
+      i++;
+    } else if (currentOp.type === DiffOperationType.Add) {
+      // 纯添加：[{+}添加内容]
+      parts.push(`[{+}${currentOp.content}]`);
+      i++;
     }
   }
   
@@ -227,11 +297,22 @@ export function canApplyDiff(text: string, hunks: DiffHunk[]): boolean {
     const position = findContextPosition(text, hunk.context, lastPosition);
     if (position === -1) {
       console.error(`找不到上下文: "${hunk.context}"`);
-      return false; // 找不到上下文
+      // 尝试从头查找
+      const retryPosition = findContextPosition(text, hunk.context, 0);
+      if (retryPosition === -1) {
+        return false; // 找不到上下文
+      }
+      console.warn(`从头查找到上下文在位置: ${retryPosition}`);
     }
     
     // 检查删除操作是否匹配
-    let checkPosition = position + hunk.context.length;
+    const contextEnd = position + hunk.context.length;
+    
+    // 打印调试信息
+    console.log(`上下文结束位置: ${contextEnd}`);
+    console.log(`上下文后的20个字符: "${text.substring(contextEnd, contextEnd + 20).replace(/\n/g, '\\n')}"`);
+    
+    let checkPosition = contextEnd;
     for (const op of hunk.operations) {
       if (op.type === DiffOperationType.Delete) {
         const deleteText = text.substring(checkPosition, checkPosition + op.content.length);
@@ -239,7 +320,20 @@ export function canApplyDiff(text: string, hunks: DiffHunk[]): boolean {
           console.error(`删除内容不匹配:
   期望: "${op.content}"
   实际: "${deleteText}"
-  位置: ${checkPosition}`);
+  位置: ${checkPosition}
+  上下文: "${hunk.context}"
+  上下文位置: ${position}`);
+          
+          // 尝试在附近查找
+          console.log('尝试在附近查找要删除的内容...');
+          const searchStart = Math.max(0, checkPosition - 20);
+          const searchEnd = Math.min(text.length, checkPosition + 100);
+          const nearbyText = text.substring(searchStart, searchEnd);
+          const deleteIndex = nearbyText.indexOf(op.content);
+          if (deleteIndex !== -1) {
+            console.log(`在位置 ${searchStart + deleteIndex} 找到了要删除的内容`);
+          }
+          
           return false; // 要删除的内容不匹配
         }
         checkPosition += op.content.length;

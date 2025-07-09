@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import CodeMirrorEditor, { MarkdownEditorRef } from '@/components/CodeMirrorEditor';
-import DiffPreview from '@/components/DiffPreview';
+import DiffControls from '@/components/DiffControls';
 import { useConfigStore, getDecryptedApiKey, hydrateConfigStore } from '@/stores/configStore';
 import { validateLLMConfig, sendMessageToLLM } from '@/services/llm';
 import { processAIResponse, applyDiffPreviews, acceptDiffChanges, rejectDiffChanges } from '@/utils/ai-response-handler';
 import { DiffPreviewItem } from '@/types/diff';
 import { testDiffParser } from '@/utils/test-diff-parser';
+import { testContextFinding } from '@/utils/test-context-finding';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -16,7 +17,7 @@ export default function Home() {
   const [showMenu, setShowMenu] = useState(false);
   const { provider } = useConfigStore();
   const [configError, setConfigError] = useState<string>('');
-  const [diffPreviews, setDiffPreviews] = useState<DiffPreviewItem[]>([]);
+  const [hasDiffs, setHasDiffs] = useState(false);
   
   const [markdown, setMarkdown] = useState(`# Markdown 编辑器功能展示
 
@@ -28,7 +29,7 @@ export default function Home() {
 - *斜体文本* 或 _斜体文本_
 - ~~删除线文本~~
 - \`行内代码\`
-- =={+}新增的内容== 和 =={-}删除的内容==
+- [{+}新增的内容] 和 [{-}删除的内容{+}替换的内容]
 
 ## 标题层级
 
@@ -168,23 +169,12 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
   useEffect(() => {
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       (window as any).testDiffParser = testDiffParser;
+      (window as any).testContextFinding = testContextFinding;
       console.log('DIFF 解析器测试已加载，在控制台运行 testDiffParser() 进行测试');
+      console.log('上下文查找测试已加载，在控制台运行 testContextFinding() 进行测试');
     }
   }, []);
 
-  // 处理接受单个修改
-  const handleAcceptDiff = (id: string) => {
-    setDiffPreviews(prev => 
-      prev.map(p => p.id === id ? { ...p, accepted: true } : p)
-    );
-  };
-
-  // 处理拒绝单个修改
-  const handleRejectDiff = (id: string) => {
-    setDiffPreviews(prev => 
-      prev.map(p => p.id === id ? { ...p, rejected: true } : p)
-    );
-  };
 
   // 处理接受所有修改
   const handleAcceptAll = () => {
@@ -193,8 +183,8 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
     // 接受所有修改（移除高亮标记）
     acceptDiffChanges(editorRef.current);
     
-    // 清空预览
-    setDiffPreviews([]);
+    // 更新状态
+    setHasDiffs(false);
   };
 
   // 处理拒绝所有修改
@@ -204,8 +194,8 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
     // 拒绝所有修改（恢复原始内容）
     rejectDiffChanges(editorRef.current);
     
-    // 清空预览
-    setDiffPreviews([]);
+    // 更新状态
+    setHasDiffs(false);
   };
 
   // 处理发送消息
@@ -237,11 +227,11 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
         const diffResult = processAIResponse(result.content, currentContent);
         
         if (diffResult.success && diffResult.previews.length > 0) {
-          // 设置预览
-          setDiffPreviews(diffResult.previews);
-          
           // 应用 diff 到编辑器（带高亮标记）
           applyDiffPreviews(editorRef.current, diffResult.previews, true);
+          
+          // 更新状态
+          setHasDiffs(true);
           
           // 清空输入框
           setPrompt('');
@@ -280,19 +270,22 @@ print(quicksort([3, 6, 8, 10, 1, 2, 1]))
           <CodeMirrorEditor
             ref={editorRef}
             value={markdown}
-            onChange={(value) => setMarkdown(value || '')}
+            onChange={(value) => {
+              setMarkdown(value || '');
+              // 检查是否还有 diff 标记（支持组合格式）
+              const hasDiffMarkers = /\[(?:\{-\}[^\{\]]+)?(?:\{\+\}[^\]]+)?\]/.test(value || '');
+              setHasDiffs(hasDiffMarkers);
+            }}
           />
         </div>
       </div>
       
-      {/* Diff Preview */}
-      <DiffPreview
-        previews={diffPreviews}
-        onAccept={handleAcceptDiff}
-        onReject={handleRejectDiff}
+      {/* Diff Controls */}
+      <DiffControls
         onAcceptAll={handleAcceptAll}
         onRejectAll={handleRejectAll}
         isLoading={isLoading}
+        hasDiffs={hasDiffs}
       />
       
       {/* Fixed Prompt Bar - ChatGPT Style */}

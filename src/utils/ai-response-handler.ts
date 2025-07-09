@@ -39,19 +39,28 @@ export function processAIResponse(aiResponse: string, editorContent: string): {
     const position = findContextPosition(editorContent, hunk.context, searchPosition);
     
     if (position === -1) {
-      continue; // 跳过找不到的块
+      console.error(`警告：找不到上下文 "${hunk.context}"，尝试从头查找`);
+      // 如果找不到，尝试从头开始查找（可能是因为之前的修改影响了位置）
+      const retryPosition = findContextPosition(editorContent, hunk.context, 0);
+      if (retryPosition === -1) {
+        console.error(`错误：完全找不到上下文 "${hunk.context}"`);
+        continue; // 跳过找不到的块
+      }
+      searchPosition = retryPosition;
+    } else {
+      searchPosition = position;
     }
 
     previews.push({
       id: `diff-${Date.now()}-${i}`,
       hunk,
-      position: position + hunk.context.length,
+      position: searchPosition + hunk.context.length,
       preview: generateDiffPreview(hunk),
       accepted: false,
       rejected: false,
     });
 
-    searchPosition = position + 1;
+    searchPosition = searchPosition + hunk.context.length + 1;
   }
 
   return {
@@ -80,15 +89,37 @@ export function applyDiffPreview(
       return false;
     }
 
-    // 如果是模糊匹配，需要调整偏移量
-    let contextEndOffset = position;
-    if (preview.hunk.context) {
-      // 找到上下文在文本中的实际结束位置
-      const contextLine = currentContent.substring(position).split('\n')[0];
-      contextEndOffset = position + contextLine.length;
-    }
+    // 计算上下文结束位置
+    let offset = position + preview.hunk.context.length;
     
-    let offset = contextEndOffset;
+    // 如果有删除操作，先验证删除内容是否匹配
+    const deleteOps = preview.hunk.operations.filter(op => op.type === DiffOperationType.Delete);
+    if (deleteOps.length > 0) {
+      // 获取要删除的完整内容
+      const expectedDelete = deleteOps.map(op => op.content).join('');
+      const actualContent = currentContent.substring(offset, offset + expectedDelete.length);
+      
+      // 如果不匹配，尝试在附近查找
+      if (actualContent !== expectedDelete) {
+        console.warn(`删除内容不匹配，尝试在附近查找...`);
+        console.log(`期望: "${expectedDelete}"`);
+        console.log(`实际: "${actualContent}"`);
+        
+        // 在上下文附近搜索要删除的内容
+        const searchStart = Math.max(0, position - 50);
+        const searchEnd = Math.min(currentContent.length, position + preview.hunk.context.length + 200);
+        const searchText = currentContent.substring(searchStart, searchEnd);
+        const deleteIndex = searchText.indexOf(expectedDelete);
+        
+        if (deleteIndex !== -1) {
+          offset = searchStart + deleteIndex;
+          console.log(`在位置 ${offset} 找到了要删除的内容`);
+        } else {
+          console.error(`在附近找不到要删除的内容`);
+          return false;
+        }
+      }
+    }
     
     // 按顺序处理操作
     for (const op of preview.hunk.operations) {
@@ -106,15 +137,15 @@ export function applyDiffPreview(
         
         if (showHighlight) {
           // 用高亮标记替换要删除的内容
-          editor.replaceRange(`=={-}${op.content}==`, offset, offset + deleteLength);
-          offset += `=={-}${op.content}==`.length;
+          editor.replaceRange(`[{-}${op.content}]`, offset, offset + deleteLength);
+          offset += `[{-}${op.content}]`.length;
         } else {
           // 直接删除
           editor.deleteText(offset, deleteLength);
         }
       } else if (op.type === DiffOperationType.Add) {
         // 添加操作
-        const insertText = showHighlight ? `=={+}${op.content}==` : op.content;
+        const insertText = showHighlight ? `[{+}${op.content}]` : op.content;
         editor.insertText(offset, insertText);
         offset += insertText.length;
       }
@@ -169,10 +200,15 @@ export function applyDiffPreviews(
  * @returns 清理后的文本
  */
 export function cleanHighlightMarkers(text: string): string {
-  // 移除 =={+}...== 标记，保留内容
-  text = text.replace(/==\{\+\}([^=]+)==/g, '$1');
-  // 移除 =={-}...== 标记和内容
-  text = text.replace(/==\{-\}[^=]+==/g, '');
+  // 处理组合格式 [{-}删除内容{+}添加内容]
+  text = text.replace(/\[\{-\}[^\{\]]+\{\+\}([^\]]+)\]/g, '$1');
+  
+  // 处理单独格式
+  // 移除 [{+}...] 标记，保留内容
+  text = text.replace(/\[\{\+\}([^\]]+)\]/g, '$1');
+  // 移除 [{-}...] 标记和内容
+  text = text.replace(/\[\{-\}([^\]]+)\]/g, '');
+  
   return text;
 }
 
@@ -191,13 +227,16 @@ export function acceptDiffChanges(
   let newContent = content;
 
   if (keepAdditions) {
-    // 移除添加标记，保留内容
-    newContent = newContent.replace(/==\{\+\}([^=]+)==/g, '$1');
+    // 处理组合格式：保留添加内容
+    newContent = newContent.replace(/\[\{-\}[^\{\]]+\{\+\}([^\]]+)\]/g, '$1');
+    // 处理单独的添加：保留内容
+    newContent = newContent.replace(/\[\{\+\}([^\]]+)\]/g, '$1');
   }
 
   if (removeDelations) {
-    // 移除删除标记和内容
-    newContent = newContent.replace(/==\{-\}[^=]+==/g, '');
+    // 处理组合格式：已经在上面处理了
+    // 处理单独的删除：移除整个标记
+    newContent = newContent.replace(/\[\{-\}([^\]]+)\]/g, '');
   }
 
   if (newContent !== content) {
@@ -213,11 +252,14 @@ export function rejectDiffChanges(editor: MarkdownEditorRef): void {
   const content = editor.getValue();
   let newContent = content;
 
-  // 移除添加标记和内容
-  newContent = newContent.replace(/==\{\+\}[^=]+==/g, '');
+  // 处理组合格式：保留删除内容
+  newContent = newContent.replace(/\[\{-\}([^\{\]]+)\{\+\}[^\]]+\]/g, '$1');
   
-  // 移除删除标记，保留内容
-  newContent = newContent.replace(/==\{-\}([^=]+)==/g, '$1');
+  // 处理单独的添加：移除整个标记
+  newContent = newContent.replace(/\[\{\+\}([^\]]+)\]/g, '');
+  
+  // 处理单独的删除：保留内容
+  newContent = newContent.replace(/\[\{-\}([^\]]+)\]/g, '$1');
 
   if (newContent !== content) {
     editor.setValue(newContent);

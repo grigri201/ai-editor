@@ -1,4 +1,22 @@
 @import "tailwindcss";
+
+/* CodeMirror 内联 diff 控制按钮样式 */
+.cm-diff-controls {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.cm-line:hover .cm-diff-controls {
+  opacity: 1;
+}
+
+.cm-diff-accept:hover {
+  background: #059669 !important;
+}
+
+.cm-diff-reject:hover {
+  background: #dc2626 !important;
+}
 @import "./markdown-editor.css";
 
 :root {
