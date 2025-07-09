@@ -8,6 +8,9 @@ export const rejectDiffEffect = StateEffect.define<{ from: number; to: number }>
 
 // 内联按钮 Widget
 class DiffControlWidget extends WidgetType {
+  private static instanceCounter = 0;
+  private instanceId: number;
+  
   constructor(
     private from: number,
     private to: number,
@@ -18,11 +21,14 @@ class DiffControlWidget extends WidgetType {
     private onReject: () => void
   ) {
     super();
+    this.instanceId = DiffControlWidget.instanceCounter++;
   }
 
   toDOM() {
     const container = document.createElement('span');
     container.className = 'cm-diff-controls';
+    container.id = `diff-control-${this.instanceId}`;
+    container.setAttribute('data-diff-range', `${this.from}-${this.to}`);
     container.style.cssText = `
       display: inline-flex;
       gap: 2px;
@@ -39,11 +45,13 @@ class DiffControlWidget extends WidgetType {
       background: #10b981;
       color: white;
       border: none;
-      border-radius: 4px;
-      padding: 2px 6px;
+      border-radius: 3px;
+      padding: 1px 4px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
     `;
     acceptBtn.onclick = (e) => {
       e.preventDefault();
@@ -60,11 +68,13 @@ class DiffControlWidget extends WidgetType {
       background: #ef4444;
       color: white;
       border: none;
-      border-radius: 4px;
-      padding: 2px 6px;
+      border-radius: 3px;
+      padding: 1px 4px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
     `;
     rejectBtn.onclick = (e) => {
       e.preventDefault();

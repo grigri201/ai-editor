@@ -1,21 +1,14 @@
 @import "tailwindcss";
 
 /* CodeMirror 内联 diff 控制按钮样式 */
-.cm-diff-controls {
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.cm-line:hover .cm-diff-controls {
-  opacity: 1;
-}
-
 .cm-diff-accept:hover {
   background: #059669 !important;
+  opacity: 1 !important;
 }
 
 .cm-diff-reject:hover {
   background: #dc2626 !important;
+  opacity: 1 !important;
 }
 @import "./markdown-editor.css";
 
@@ -46,6 +39,34 @@ body {
 .cm-highlight {
   border-radius: 2px;
   padding: 0 2px;
+}
+
+/* 确保 diff 高亮样式优先级高于 link 样式 */
+.cm-highlight-delete,
+.cm-highlight-delete > * {
+  color: #b31d28 !important;
+  background-color: #ffeef0 !important;
+  text-decoration: none !important;
+}
+
+.cm-highlight-add,
+.cm-highlight-add > * {
+  color: #22863a !important;
+  background-color: #e6ffed !important;
+  text-decoration: none !important;
+}
+
+/* 特别处理嵌套的 link 样式 */
+.cm-highlight-delete .cm-link,
+.cm-highlight-delete .cm-list.cm-link {
+  color: #b31d28 !important;
+  text-decoration: none !important;
+}
+
+.cm-highlight-add .cm-link,
+.cm-highlight-add .cm-list.cm-link {
+  color: #22863a !important;
+  text-decoration: none !important;
 }
 
 /* 修复 diff 预览的 z-index 层级 */

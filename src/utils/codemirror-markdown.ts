@@ -173,42 +173,54 @@ export const customHighlightPlugin = ViewPlugin.fromClass(
         
         // 处理删除部分
         if (deleteText) {
-          // {-}
-          decorations.push({ from: currentPos, to: currentPos + 3, decoration: markdownFormattingHighlightMark });
-          currentPos += 3;
-          
-          // 删除的内容
           const deleteStyle = parseHighlightStyle('-');
           if (deleteStyle) {
-            const decoration = Decoration.mark({
+            // {-} 标记也使用相同的颜色
+            const markDecoration = Decoration.mark({
               attributes: {
-                style: `background-color: ${deleteStyle.backgroundColor}; color: ${deleteStyle.color};`,
+                style: `background-color: ${deleteStyle.backgroundColor} !important; color: ${deleteStyle.color} !important;`,
                 class: 'cm-highlight cm-highlight-delete'
               }
             });
-            decorations.push({ from: currentPos, to: currentPos + deleteText.length, decoration });
+            decorations.push({ from: currentPos, to: currentPos + 3, decoration: markDecoration });
+            currentPos += 3;
+            
+            // 删除的内容
+            const contentDecoration = Decoration.mark({
+              attributes: {
+                style: `background-color: ${deleteStyle.backgroundColor} !important; color: ${deleteStyle.color} !important;`,
+                class: 'cm-highlight cm-highlight-delete'
+              }
+            });
+            decorations.push({ from: currentPos, to: currentPos + deleteText.length, decoration: contentDecoration });
+            currentPos += deleteText.length;
           }
-          currentPos += deleteText.length;
         }
         
         // 处理添加部分
         if (addText) {
-          // {+}
-          decorations.push({ from: currentPos, to: currentPos + 3, decoration: markdownFormattingHighlightMark });
-          currentPos += 3;
-          
-          // 添加的内容
           const addStyle = parseHighlightStyle('+');
           if (addStyle) {
-            const decoration = Decoration.mark({
+            // {+} 标记也使用相同的颜色
+            const markDecoration = Decoration.mark({
               attributes: {
-                style: `background-color: ${addStyle.backgroundColor}; color: ${addStyle.color};`,
+                style: `background-color: ${addStyle.backgroundColor} !important; color: ${addStyle.color} !important;`,
                 class: 'cm-highlight cm-highlight-add'
               }
             });
-            decorations.push({ from: currentPos, to: currentPos + addText.length, decoration });
+            decorations.push({ from: currentPos, to: currentPos + 3, decoration: markDecoration });
+            currentPos += 3;
+            
+            // 添加的内容
+            const contentDecoration = Decoration.mark({
+              attributes: {
+                style: `background-color: ${addStyle.backgroundColor} !important; color: ${addStyle.color} !important;`,
+                class: 'cm-highlight cm-highlight-add'
+              }
+            });
+            decorations.push({ from: currentPos, to: currentPos + addText.length, decoration: contentDecoration });
+            currentPos += addText.length;
           }
-          currentPos += addText.length;
         }
         
         // 标记结束 ]
