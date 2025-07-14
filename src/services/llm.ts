@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
 import { LLMProvider } from '@/types/config';
 import { getDecryptedApiKey, useConfigStore } from '@/stores/configStore';
-import { SYSTEM_TEMPLATE } from '@/prompts/system';
-import { USER_TEMPLATE } from '@/prompts/base';
+import { UNIFIED_EDIT_PROMPT } from '@/prompts/unified';
 
 // API 端点配置
 const API_ENDPOINTS = {
@@ -83,17 +82,15 @@ export async function sendMessageToLLM(
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
     
-    // 如果提供了模板变量，使用模板
+    // 如果提供了模板变量，使用统一模板
     if (templateVariables) {
-      const finalSystemPrompt = systemPrompt || SYSTEM_TEMPLATE;
-      messages.push({ role: 'system', content: finalSystemPrompt });
-      
-      const userMessage = applyTemplate(USER_TEMPLATE, {
+      const finalSystemPrompt = systemPrompt || UNIFIED_EDIT_PROMPT;
+      const unifiedMessage = applyTemplate(finalSystemPrompt, {
         content: templateVariables.content || '',
         instruction: templateVariables.instruction || message,
         language: templateVariables.language || 'en',
       });
-      messages.push({ role: 'user', content: userMessage });
+      messages.push({ role: 'system', content: unifiedMessage });
     } else {
       // 否则使用原始方式
       if (systemPrompt) {
@@ -147,17 +144,15 @@ export async function* streamMessageToLLM(
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
     
-    // 如果提供了模板变量，使用模板
+    // 如果提供了模板变量，使用统一模板
     if (templateVariables) {
-      const finalSystemPrompt = systemPrompt || SYSTEM_TEMPLATE;
-      messages.push({ role: 'system', content: finalSystemPrompt });
-      
-      const userMessage = applyTemplate(USER_TEMPLATE, {
+      const finalSystemPrompt = systemPrompt || UNIFIED_EDIT_PROMPT;
+      const unifiedMessage = applyTemplate(finalSystemPrompt, {
         content: templateVariables.content || '',
         instruction: templateVariables.instruction || message,
         language: templateVariables.language || 'en',
       });
-      messages.push({ role: 'user', content: userMessage });
+      messages.push({ role: 'system', content: unifiedMessage });
     } else {
       // 否则使用原始方式
       if (systemPrompt) {
