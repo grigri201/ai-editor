@@ -81,10 +81,6 @@ export function parseDiff(diffText: string): DiffResult {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
-      // 跳过空行
-      if (!line.trim()) {
-        continue;
-      }
 
       // 检查是否是上下文行
       if (line.startsWith('@')) {
@@ -188,6 +184,40 @@ export function parseDiff(diffText: string): DiffResult {
     // 保存最后一个 hunk
     if (currentHunk && currentHunk.operations.length > 0) {
       hunks.push(currentHunk);
+    }
+
+    // 合并连续的相同类型操作
+    for (const hunk of hunks) {
+      const mergedOps: DiffOperation[] = [];
+      let i = 0;
+      
+      while (i < hunk.operations.length) {
+        const currentOp = hunk.operations[i];
+        const sameTypeOps: DiffOperation[] = [currentOp];
+        
+        // 收集所有连续的相同类型操作
+        let j = i + 1;
+        while (j < hunk.operations.length && hunk.operations[j].type === currentOp.type) {
+          sameTypeOps.push(hunk.operations[j]);
+          j++;
+        }
+        
+        // 如果有多个连续的相同类型操作，合并它们
+        if (sameTypeOps.length > 1) {
+          const mergedContent = sameTypeOps.map(op => op.content).join('\n');
+          mergedOps.push({
+            type: currentOp.type,
+            content: mergedContent,
+            rawLine: sameTypeOps.map(op => op.rawLine).join('\n'),
+          });
+        } else {
+          mergedOps.push(currentOp);
+        }
+        
+        i = j;
+      }
+      
+      hunk.operations = mergedOps;
     }
 
     return {

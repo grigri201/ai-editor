@@ -162,8 +162,8 @@ export const customHighlightPlugin = ViewPlugin.fromClass(
         const deleteText = match[1];
         const addText = match[2];
         
-        // 跳过空的标记
-        if (!deleteText && !addText) continue;
+        // 不跳过空的标记 - [{+}] 可能表示插入空行
+        // if (!deleteText && !addText) continue;
         
         let currentPos = start;
         

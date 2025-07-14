@@ -33,7 +33,8 @@ You MUST return ONLY the DIFF format specified below. NO other text, explanation
 2. **- line (Deletion)**: The EXACT text to delete
    - Character-by-character precision, including spaces and punctuation
    - IMPORTANT: Each line of deleted content MUST have its own - prefix
-   - For multi-line deletions, use multiple - lines
+   - WARNING: NEVER omit the - prefix. Every single line to be deleted MUST start with -
+   - For multi-line deletions, use multiple - lines, each with its own - prefix
    - Used alone for pure deletions
    - Used with + lines for replacements
 
@@ -44,17 +45,29 @@ You MUST return ONLY the DIFF format specified below. NO other text, explanation
    - Used with - lines for replacements
 
 4. **Multi-line Format**: NEVER put multiple lines after a single + or -
-   - Wrong:
+   - Wrong (for additions):
      \`\`\`
      +Line 1
      Line 2
      Line 3
      \`\`\`
-   - Correct:
+   - Correct (for additions):
      \`\`\`
      +Line 1
      +Line 2
      +Line 3
+     \`\`\`
+   - Wrong (for deletions):
+     \`\`\`
+     -Line 1
+     Line 2
+     Line 3
+     \`\`\`
+   - Correct (for deletions):
+     \`\`\`
+     -Line 1
+     -Line 2
+     -Line 3
      \`\`\`
 
 5. **Replacement operations**: When replacing text (delete + add), use BOTH:
@@ -133,8 +146,10 @@ You MUST return ONLY the DIFF format specified below. NO other text, explanation
 [EOF]
 
 REMEMBER: 
+- CRITICAL: Every deletion line MUST start with - (minus sign)
+- CRITICAL: Every addition line MUST start with + (plus sign)
 - Return ONLY the DIFF format
-- Each line MUST have its own +/- prefix
+- Each line MUST have its own +/- prefix (no exceptions)
 - No explanations or comments
 - End with [EOF]
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
+import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, placeholder } from '@codemirror/view';
 import { EditorState, StateEffect } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap, indentWithTab, history, historyKeymap } from '@codemirror/commands';
@@ -221,6 +221,7 @@ const CodeMirrorEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
           ...createMarkdownExtensions(),
           diffInlineControls,
           lightTheme,
+          placeholder('开始编写内容，或在底部输入框向 AI 提出要求...'),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               isUserInputRef.current = true;

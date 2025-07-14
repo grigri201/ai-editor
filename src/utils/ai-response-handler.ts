@@ -200,14 +200,17 @@ export function applyDiffPreviews(
  * @returns 清理后的文本
  */
 export function cleanHighlightMarkers(text: string): string {
+  // 处理特殊情况：[{+}] 表示插入空行
+  text = text.replace(/\[\{\+\}\]/g, '\n');
+  
   // 处理组合格式 [{-}删除内容{+}添加内容]
-  text = text.replace(/\[\{-\}[^\{\]]+\{\+\}([^\]]+)\]/g, '$1');
+  text = text.replace(/\[\{-\}[^\{\]]*\{\+\}([^\]]*)\]/g, '$1');
   
   // 处理单独格式
   // 移除 [{+}...] 标记，保留内容
-  text = text.replace(/\[\{\+\}([^\]]+)\]/g, '$1');
+  text = text.replace(/\[\{\+\}([^\]]*)\]/g, '$1');
   // 移除 [{-}...] 标记和内容
-  text = text.replace(/\[\{-\}([^\]]+)\]/g, '');
+  text = text.replace(/\[\{-\}([^\]]*)\]/g, '');
   
   return text;
 }
@@ -227,16 +230,18 @@ export function acceptDiffChanges(
   let newContent = content;
 
   if (keepAdditions) {
+    // 处理特殊情况：[{+}] 表示插入空行
+    newContent = newContent.replace(/\[\{\+\}\]/g, '\n');
     // 处理组合格式：保留添加内容
-    newContent = newContent.replace(/\[\{-\}[^\{\]]+\{\+\}([^\]]+)\]/g, '$1');
+    newContent = newContent.replace(/\[\{-\}[^\{\]]*\{\+\}([^\]]*)\]/g, '$1');
     // 处理单独的添加：保留内容
-    newContent = newContent.replace(/\[\{\+\}([^\]]+)\]/g, '$1');
+    newContent = newContent.replace(/\[\{\+\}([^\]]*)\]/g, '$1');
   }
 
   if (removeDelations) {
     // 处理组合格式：已经在上面处理了
     // 处理单独的删除：移除整个标记
-    newContent = newContent.replace(/\[\{-\}([^\]]+)\]/g, '');
+    newContent = newContent.replace(/\[\{-\}([^\]]*)\]/g, '');
   }
 
   if (newContent !== content) {
@@ -253,13 +258,13 @@ export function rejectDiffChanges(editor: MarkdownEditorRef): void {
   let newContent = content;
 
   // 处理组合格式：保留删除内容
-  newContent = newContent.replace(/\[\{-\}([^\{\]]+)\{\+\}[^\]]+\]/g, '$1');
+  newContent = newContent.replace(/\[\{-\}([^\{\]]*)\{\+\}[^\]]*\]/g, '$1');
   
   // 处理单独的添加：移除整个标记
-  newContent = newContent.replace(/\[\{\+\}([^\]]+)\]/g, '');
+  newContent = newContent.replace(/\[\{\+\}([^\]]*)\]/g, '');
   
   // 处理单独的删除：保留内容
-  newContent = newContent.replace(/\[\{-\}([^\]]+)\]/g, '$1');
+  newContent = newContent.replace(/\[\{-\}([^\]]*)\]/g, '$1');
 
   if (newContent !== content) {
     editor.setValue(newContent);
